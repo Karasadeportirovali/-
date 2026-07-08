@@ -6,7 +6,7 @@
     <title>манго арбузник</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        /* ===== ГЛОБАЛЬНЫЕ СТИЛИ ===== */
+        /* ===== ГЛОБАЛЬНЫЕ СТИЛИ (с анимациями) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg: #0a0a0a; --bg2: #141414; --bg3: #1c1c1c; --bg4: #252525; --bg5: #2e2e2e;
@@ -328,7 +328,7 @@
 
         let myName = 'Карасик';
         let localStream = null, peer = null, currentCall = null, isConnected = false, isScreenSharing = false, screenStream = null;
-        let isHost = false, clients = {}, chatHistory = [], myDataConnection = null;
+        let isHost = false, clients = {}, myDataConnection = null;
         const ROOM_ID = 'mango_chat';
         let reconnectTimer = null, isConnecting = false;
         let sentIds = new Set(), pendingMessages = [];
@@ -372,7 +372,7 @@
         });
 
         // =================================================================
-        // 3. НАСТРОЙКИ (с разделением истории)
+        // 3. НАСТРОЙКИ И ИСТОРИЯ
         // =================================================================
         function loadSettings() {
             const savedUser = localStorage.getItem('userChoice');
@@ -383,12 +383,22 @@
                 document.querySelector('input[name="userChoice"][value="karasik"]').checked = true;
                 setUser('karasik');
             } else {
+                // по умолчанию Карасик, но не отмечаем радио
                 myName = 'Карасик';
                 localLabel.textContent = myName;
                 remoteLabel.textContent = 'Катер';
+                // не сохраняем, чтобы при первом запуске модалка показала
             }
+            // Масштаб
             const savedZoom = localStorage.getItem('zoomLevel');
-            if (savedZoom) { zoomSlider.value = savedZoom; applyZoom(savedZoom); } else applyZoom(100);
+            if (savedZoom) {
+                const val = parseInt(savedZoom);
+                zoomSlider.value = val;
+                applyZoom(val);
+            } else {
+                applyZoom(100);
+            }
+            // Тема
             const savedTheme = localStorage.getItem('lightTheme') === 'true';
             lightThemeToggle.checked = savedTheme;
             applyTheme(savedTheme);
@@ -407,22 +417,23 @@
                 remoteLabel.textContent = 'Катер';
             }
             localStorage.setItem('userChoice', choice);
-            // Загружаем историю для этого пользователя
             loadChatHistoryForUser(myName);
+            // Также обновляем радио-кнопки
+            document.querySelectorAll('input[name="userChoice"]').forEach(r => {
+                r.checked = (r.value === choice);
+            });
         }
 
         function loadChatHistoryForUser(user) {
             const key = `chatHistory_${user}`;
-            const saved = localStorage.getItem(key);
             chatMessages.innerHTML = '';
-            chatHistory = [];
+            const saved = localStorage.getItem(key);
             if (saved) {
                 try {
                     const msgs = JSON.parse(saved);
                     msgs.forEach(msg => {
                         const isMe = (msg.sender === user);
                         addChatMessage(msg.text, msg.sender, msg.time, msg.id, msg.replyTo, msg.reactions, msg.type, isMe);
-                        chatHistory.push(msg);
                     });
                 } catch(e) {}
             }
@@ -449,12 +460,10 @@
         }
         modalKarasik.addEventListener('click', ()=>{
             setUser('karasik');
-            document.querySelector('input[name="userChoice"][value="karasik"]').checked = true;
             hideModal();
         });
         modalKater.addEventListener('click', ()=>{
             setUser('kater');
-            document.querySelector('input[name="userChoice"][value="kater"]').checked = true;
             hideModal();
         });
 
@@ -474,7 +483,7 @@
         }
 
         // =================================================================
-        // 6. ПОДКЛЮЧЕНИЕ (без изменений)
+        // 6. ПОДКЛЮЧЕНИЕ (TURN)
         // =================================================================
         function initConnection() {
             if (isConnecting) return;
@@ -622,8 +631,7 @@
             const clientId = conn.peer;
             clients[clientId] = conn;
             conn.on('open', () => {
-                // Отправляем историю этому клиенту (только его историю? Нет, всю историю хоста)
-                // Но лучше отправлять историю текущего пользователя
+                // Отправляем историю хоста (текущего пользователя) новому клиенту
                 const key = `chatHistory_${myName}`;
                 const history = JSON.parse(localStorage.getItem(key) || '[]');
                 history.forEach(msg => {
@@ -634,7 +642,7 @@
             conn.on('data', (data) => {
                 if (data.type === 'chat') {
                     const msg = { text:data.text, sender:data.sender||clientId, time:new Date().toLocaleTimeString(), id:data.id, replyTo:data.replyTo, reactions:data.reactions, type:data.type };
-                    // Сохраняем в историю хоста (он тоже должен видеть)
+                    // Сохраняем в историю хоста
                     const key = `chatHistory_${myName}`;
                     let history = JSON.parse(localStorage.getItem(key) || '[]');
                     history.push(msg);
@@ -669,13 +677,12 @@
             const timeStr = time || new Date().toLocaleTimeString();
             const msg = { type:'chat', text, sender, time:timeStr, id, replyTo, reactions, type:type||'text' };
             Object.values(clients).forEach(c => { if (c.open) c.send(msg); });
-            const isMe = (sender === myName);
             if (sender !== myName) {
                 // Сохраняем чужое сообщение в свою историю
                 const msgToSave = { text, sender, time:timeStr, id, replyTo, reactions, type:type||'text' };
                 saveChatMessage(msgToSave);
+                addChatMessage(text, sender, timeStr, id, replyTo, reactions, type||'text', false);
             }
-            if (sender !== myName) addChatMessage(text, sender, timeStr, id, replyTo, reactions, type||'text', false);
         }
 
         function broadcastFile(file, name, mime, sender, id) {
@@ -787,7 +794,7 @@
         }
 
         // =================================================================
-        // 8. УПРАВЛЕНИЕ КОМНАТОЙ
+        // 8. УПРАВЛЕНИЕ КОМНАТОЙ (ВИДЕОЧАТ)
         // =================================================================
         camBtn.addEventListener('click', ()=>{
             if (!localStream) return;
@@ -802,6 +809,7 @@
             if (t.enabled) { camBtn.classList.add('active'); camBtn.textContent='📷 Камера'; }
             else { camBtn.classList.remove('active'); camBtn.textContent='📷 Выкл'; }
         }
+
         micBtn.addEventListener('click', ()=>{
             if (!localStream) return;
             const tracks = localStream.getAudioTracks();
@@ -811,6 +819,7 @@
             if (t.enabled) { micBtn.classList.add('active'); micBtn.textContent='🎤 Микрофон'; }
             else { micBtn.classList.remove('active'); micBtn.textContent='🎤 Выкл'; }
         });
+
         screenBtn.addEventListener('click', async ()=>{
             if (isScreenSharing) stopScreenShare();
             else await startScreenShare();
@@ -856,6 +865,7 @@
                     camBtn.textContent = '📷 Камера';
                 }).catch(err => console.error('Не удалось вернуть камеру:', err));
         }
+
         disconnectBtn.addEventListener('click', ()=>{
             if (currentCall) { currentCall.close(); currentCall=null; }
             if (peer) { peer.destroy(); peer=null; }
@@ -863,7 +873,6 @@
             isConnected = false;
             isHost = false;
             clients = {};
-            chatHistory = [];
             myDataConnection = null;
             isConnecting = false;
             if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer=null; }
@@ -1048,8 +1057,7 @@
             if (!text) return;
             const id = Date.now() + '-' + Math.random().toString(36).substr(2,6);
             sentIds.add(id);
-            const isMe = true;
-            addChatMessage(text, myName, null, id, replyTo, null, 'text', isMe);
+            addChatMessage(text, myName, null, id, replyTo, null, 'text', true);
             const msg = { text, sender:myName, time:new Date().toLocaleTimeString(), id, replyTo, reactions:null, type:'text' };
             saveChatMessage(msg);
             pendingMessages.push({ id, type:'chat', data:{text}, sender:myName, time:new Date().toLocaleTimeString() });
@@ -1093,8 +1101,7 @@
                 const url = URL.createObjectURL(blob);
                 const mime = file.type;
                 const name = file.name;
-                const isMe = true;
-                displayFileMessage(myName, url, name, mime, isMe, id);
+                displayFileMessage(myName, url, name, mime, true, id);
                 const msg = { text:`[Файл: ${name}]`, sender:myName, time:new Date().toLocaleTimeString(), id, replyTo:null, reactions:null, type:'file' };
                 saveChatMessage(msg);
                 pendingMessages.push({ id, type:'file', data:{file:blob, name, mime}, sender:myName, time:new Date().toLocaleTimeString() });
@@ -1272,8 +1279,7 @@
                     const id = Date.now() + '-' + Math.random().toString(36).substr(2,6);
                     sentIds.add(id);
                     const url = URL.createObjectURL(blob);
-                    const isMe = true;
-                    addChatMessage(url, myName, null, id, null, null, 'videoMsg', isMe);
+                    addChatMessage(url, myName, null, id, null, null, 'videoMsg', true);
                     const msg = { text:url, sender:myName, time:new Date().toLocaleTimeString(), id, replyTo:null, reactions:null, type:'videoMsg' };
                     saveChatMessage(msg);
                     pendingMessages.push({ id, type:'videoMsg', data:{blob}, sender:myName, time:new Date().toLocaleTimeString() });
@@ -1365,8 +1371,7 @@
                     const url = URL.createObjectURL(blob);
                     const duration = Math.round(blob.size / 16000);
                     const durationStr = `${Math.floor(duration/60)}:${(duration%60).toString().padStart(2,'0')}`;
-                    const isMe = true;
-                    addChatMessage(durationStr, myName, null, id, null, null, 'voice', isMe);
+                    addChatMessage(durationStr, myName, null, id, null, null, 'voice', true);
                     const msg = { text:durationStr, sender:myName, time:new Date().toLocaleTimeString(), id, replyTo:null, reactions:null, type:'voice' };
                     saveChatMessage(msg);
                     pendingMessages.push({ id, type:'voice', data:{blob}, sender:myName, time:new Date().toLocaleTimeString() });
@@ -1475,7 +1480,35 @@
         }, true);
 
         // =================================================================
-        // 16. ИНИЦИАЛИЗАЦИЯ
+        // 16. МАСШТАБ И ТЕМА (привязаны к элементам)
+        // =================================================================
+        function applyZoom(value) {
+            const percent = parseInt(value);
+            mainWrapper.style.transform = `scale(${percent / 100})`;
+            zoomValue.textContent = percent + '%';
+            localStorage.setItem('zoomLevel', percent);
+        }
+
+        zoomSlider.addEventListener('input', (e) => {
+            applyZoom(e.target.value);
+        });
+
+        zoomDefaultBtn.addEventListener('click', () => {
+            zoomSlider.value = 100;
+            applyZoom(100);
+        });
+
+        function applyTheme(light) {
+            document.documentElement.classList.toggle('light', light);
+            localStorage.setItem('lightTheme', light);
+        }
+
+        lightThemeToggle.addEventListener('change', (e) => {
+            applyTheme(e.target.checked);
+        });
+
+        // =================================================================
+        // 17. ИНИЦИАЛИЗАЦИЯ
         // =================================================================
         function init() {
             if (!localStorage.getItem('userChoice')) {
@@ -1487,12 +1520,12 @@
                     else initConnection();
                 });
             }
-            loadSettings();
+            loadSettings(); // еще раз для синхронизации
             statusEl.textContent = '❌ Не подключено';
             statusEl.className = 'status offline';
         }
 
-        // Привязываем отправку сообщений (для надёжности)
+        // Привязываем отправку сообщений
         chatSendBtn.addEventListener('click', sendTextMessage);
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') sendTextMessage();
@@ -1507,8 +1540,25 @@
             if (reconnectTimer) clearTimeout(reconnectTimer);
         });
 
+        // Дополнительно: обновляем radio при загрузке, если выбран пользователь
+        const saved = localStorage.getItem('userChoice');
+        if (saved) {
+            document.querySelectorAll('input[name="userChoice"]').forEach(r => {
+                r.checked = (r.value === saved);
+            });
+        }
+
+        // Обработчики для радио-кнопок в настройках
+        userRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    setUser(e.target.value);
+                }
+            });
+        });
+
         init();
-        console.log('манго арбузник – теперь у каждого пользователя своя история и свой цвет!');
+        console.log('манго арбузник – полностью рабочий, все функции восстановлены!');
     </script>
 </body>
 </html>
