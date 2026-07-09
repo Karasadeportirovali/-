@@ -6,7 +6,7 @@
     <title>арбузник</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        /* ===== ВСЕ СТИЛИ (полный набор) ===== */
+        /* ===== ВСЕ СТИЛИ (с новыми для статуса) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg: #0a0a0a; --bg2: #141414; --bg3: #1c1c1c; --bg4: #252525; --bg5: #2e2e2e;
@@ -71,13 +71,6 @@
         }
         .topbar .title { font-size:16px; font-weight:700; color:var(--ac); letter-spacing:1px; }
         .topbar .datetime { font-size:11px; color:var(--txt2); background:var(--bg3); padding:2px 10px; border-radius:20px; border:1px solid var(--br); white-space:nowrap; }
-        .topbar .online-status { font-size:11px; color:var(--txt2); background:var(--bg3); padding:2px 10px; border-radius:20px; border:1px solid var(--br); display:flex; align-items:center; gap:6px; }
-        .topbar .online-status .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
-        .topbar .online-status .dot.online { background:#5a5; animation:pulse-dot 1.5s infinite; }
-        .topbar .online-status .dot.offline { background:#a55; }
-        @keyframes pulse-dot { 0% { opacity:0.4; } 50% { opacity:1; } 100% { opacity:0.4; } }
-
-        /* Кнопка три точки */
         .topbar .more-btn {
             background:transparent; border:1px solid var(--br); border-radius:50%; width:32px; height:32px;
             display:flex; align-items:center; justify-content:center; color:var(--txt2); cursor:pointer; font-size:18px;
@@ -161,7 +154,18 @@
         .chat-messages .msg.msg-video .circle-video:hover video::-webkit-media-controls { display:block !important; }
         @keyframes msgSlide { 0% { opacity:0; transform:translateY(10px) scale(0.95); } 100% { opacity:1; transform:translateY(0) scale(1); } }
         .chat-messages .msg .sender { font-size:11px; color:var(--txt2); margin-bottom:2px; font-weight:600; }
-        .chat-messages .msg .time { position:absolute; bottom:4px; left:8px; font-size:9px; color:var(--txt3); opacity:0.7; }
+        .chat-messages .msg .msg-footer {
+            display:flex; justify-content:flex-end; align-items:center; gap:4px; margin-top:2px; font-size:10px; color:var(--txt3);
+        }
+        .chat-messages .msg .msg-footer .status-icon {
+            font-weight:bold; font-size:12px; margin-left:2px;
+        }
+        .chat-messages .msg .msg-footer .status-icon[data-status="sent"] {
+            color: #aaa;
+        }
+        .chat-messages .msg .msg-footer .status-icon[data-status="delivered"] {
+            color: #5a5;
+        }
         .chat-messages .msg .reply-to { font-size:11px; color:var(--ac); background:var(--bg3); padding:2px 8px; border-radius:8px; margin-bottom:3px; border-left:3px solid var(--ac); }
         .chat-messages .msg .content { word-wrap:break-word; }
         .chat-messages .msg .sticker-img { max-width:128px; max-height:128px; border-radius:12px; display:block; margin:4px 0; }
@@ -216,7 +220,6 @@
         .reply-indicator { background:var(--bg3); padding:4px 10px; border-radius:16px; font-size:12px; color:var(--txt2); display:flex; align-items:center; gap:6px; margin:0 8px 4px; }
         .reply-indicator .cancel-reply { cursor:pointer; color:#f44; font-weight:bold; }
 
-        /* Кнопка "Вниз" */
         .scroll-down-btn {
             position:absolute; bottom:80px; right:20px; background:var(--bg2); border:1px solid var(--br); border-radius:50%;
             width:44px; height:44px; display:flex; align-items:center; justify-content:center; color:var(--txt2); font-size:20px;
@@ -278,7 +281,6 @@
         .recording-modal .controls-bottom .action-btn { background:#2a2a2a; font-size:18px; padding:10px 16px; }
         @media(max-width:700px){ .recording-modal .preview { width:240px; height:240px; } .recording-modal .controls-bottom button { padding:8px 14px; font-size:13px; min-width:50px; } }
 
-        /* Диалог отложки */
         .schedule-dialog {
             position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:9999;
         }
@@ -297,7 +299,6 @@
         .schedule-dialog .box .btns .confirm { background:#4a6d8a; border-color:#4a6d8a; color:#fff; }
         .schedule-dialog .box .btns .confirm:hover { background:#5a8aaa; }
 
-        /* Редактор картинок */
         .image-editor {
             position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; align-items:center; justify-content:center; z-index:9999; flex-direction:column;
         }
@@ -450,7 +451,7 @@
             <span class="dot offline" id="menuStatusDot"></span>
             <span id="menuStatusText">Не подключено</span>
         </div>
-        <div class="version-info">v.4.3</div>
+        <div class="version-info">v.4.4</div>
     </div>
 
     <!-- ОСНОВНОЙ БЛОК -->
@@ -458,15 +459,8 @@
         <div class="topbar">
             <div class="title">арбузник</div>
             <div class="datetime" id="datetime"></div>
-            <div class="online-status" id="onlineStatus">
-                <span class="dot offline" id="onlineDot"></span>
-                <span id="onlineText">нет сети</span>
-            </div>
             <button class="more-btn" id="moreBtn">⋮</button>
             <div class="more-menu" id="moreMenu">
-                <button id="moreCopy">📋 Копировать текст</button>
-                <button id="moreDeleteSelf">🗑️ Удалить у себя</button>
-                <button id="moreSchedule">⏰ Отложить отправку</button>
                 <button id="moreClearHistory">🗑️ Очистить историю</button>
             </div>
         </div>
@@ -627,7 +621,6 @@
         const emojiBtn = document.getElementById('emojiBtn');
         const emojiPanel = document.getElementById('emojiPanel');
         const sendBtn = document.getElementById('sendBtn');
-        const scheduleBtn = document.getElementById('scheduleBtn');
         const scheduleDialog = document.getElementById('scheduleDialog');
         const scheduleTime = document.getElementById('scheduleTime');
         const scheduleConfirm = document.getElementById('scheduleConfirm');
@@ -646,9 +639,6 @@
         const scrollDownBtn = document.getElementById('scrollDownBtn');
         const moreBtn = document.getElementById('moreBtn');
         const moreMenu = document.getElementById('moreMenu');
-        const moreCopy = document.getElementById('moreCopy');
-        const moreDeleteSelf = document.getElementById('moreDeleteSelf');
-        const moreSchedule = document.getElementById('moreSchedule');
         const moreClearHistory = document.getElementById('moreClearHistory');
 
         const userRadios = document.querySelectorAll('input[name="userChoice"]');
@@ -666,9 +656,6 @@
         const modalTester = document.getElementById('modalTester');
         const splash = document.getElementById('splash');
         const datetimeEl = document.getElementById('datetime');
-        const onlineStatus = document.getElementById('onlineStatus');
-        const onlineDot = document.getElementById('onlineDot');
-        const onlineText = document.getElementById('onlineText');
         const audioPlayer = document.getElementById('audioPlayer');
         const playPauseBtn = document.getElementById('playPauseBtn');
         const volumeSlider = document.getElementById('volumeSlider');
@@ -818,7 +805,6 @@
             renderStickerPreview();
             renderEmoji();
             updateMenuStatus(false, 'Не подключено');
-            updateOnlineStatus(false);
         }
 
         function setUser(choice) {
@@ -849,16 +835,16 @@
                             if (msg.data) {
                                 const blob = base64ToBlob(msg.data, msg.mime || 'application/octet-stream');
                                 const url = URL.createObjectURL(blob);
-                                if (msg.type === 'file') displayFileMessage(msg.sender, url, msg.name, msg.mime, msg.size, isMe, msg.id);
-                                else if (msg.type === 'voice') displayAudioMessage(msg.sender, url, isMe, msg.id);
-                                else if (msg.type === 'videoMsg') displayVideoMessage(msg.sender, url, isMe, msg.id);
+                                if (msg.type === 'file') displayFileMessage(msg.sender, url, msg.name, msg.mime, msg.size, isMe, msg.id, msg.status);
+                                else if (msg.type === 'voice') displayAudioMessage(msg.sender, url, isMe, msg.id, msg.status);
+                                else if (msg.type === 'videoMsg') displayVideoMessage(msg.sender, url, isMe, msg.id, msg.status);
                                 continue;
                             }
                         } else if (msg.type === 'sticker') {
                             displayStickerMessage(msg.sender, msg.data, isMe, msg.id);
                             continue;
                         }
-                        addChatMessage(msg.text, msg.sender, msg.time, msg.id, msg.replyTo, msg.reactions, msg.type, isMe);
+                        addChatMessage(msg.text, msg.sender, msg.time, msg.id, msg.replyTo, msg.reactions, msg.type, isMe, msg.status || 'delivered');
                     }
                 } catch(e) { console.warn('Ошибка загрузки истории', e); }
             }
@@ -869,6 +855,8 @@
         function saveChatMessage(msg) {
             const key = `chatHistory_${myName}`;
             let history = JSON.parse(localStorage.getItem(key) || '[]');
+            // Если статус не задан, ставим 'delivered' для старых
+            if (!msg.status) msg.status = 'delivered';
             history.push(msg);
             localStorage.setItem(key, JSON.stringify(history));
         }
@@ -876,11 +864,6 @@
         function updateMenuStatus(online, text) {
             menuStatusDot.className = 'dot ' + (online ? 'online' : 'offline');
             menuStatusText.textContent = text;
-        }
-
-        function updateOnlineStatus(online, text = online ? 'в сети' : 'нет сети') {
-            onlineDot.className = 'dot ' + (online ? 'online' : 'offline');
-            onlineText.textContent = text;
         }
 
         function updateBadge() {
@@ -956,7 +939,7 @@
         }
 
         // =================================================================
-        // 7. ПОДКЛЮЧЕНИЕ
+        // 7. ПОДКЛЮЧЕНИЕ (без верхнего статуса)
         // =================================================================
         function initConnection() {
             if (isConnecting) return;
@@ -988,7 +971,6 @@
                     setTimeout(()=>initConnection(),3000);
                     isConnecting=false;
                     updateMenuStatus(false, 'Не подключено');
-                    updateOnlineStatus(false);
                 }
             }, 10000);
             peer.on('open', () => {
@@ -999,7 +981,6 @@
                 if (err.type === 'peer-unavailable') { becomeHost(); }
                 else {
                     updateMenuStatus(false, 'Ошибка: '+err.message);
-                    updateOnlineStatus(false);
                     isConnecting=false;
                     setTimeout(()=>initConnection(),5000);
                 }
@@ -1016,7 +997,6 @@
                     conn.on('data', (data) => handleIncomingData(data));
                     conn.on('close', () => {
                         updateMenuStatus(false, 'Отключено');
-                        updateOnlineStatus(false);
                         isConnecting=false;
                         setTimeout(()=>initConnection(),3000);
                     });
@@ -1027,7 +1007,6 @@
                         });
                     }
                     updateMenuStatus(true, 'Подключено к чату');
-                    updateOnlineStatus(true);
                     isConnecting=false;
                     isHost=false;
                 });
@@ -1076,12 +1055,10 @@
                         }
                     });
                     updateMenuStatus(true, 'Ожидание участников...');
-                    updateOnlineStatus(false, 'ожидание...');
                     isConnecting=false;
                 });
                 peer.on('error', (err) => {
                     updateMenuStatus(false, 'Ошибка хоста: '+err.message);
-                    updateOnlineStatus(false);
                     isConnecting=false;
                     setTimeout(()=>initConnection(),5000);
                 });
@@ -1096,7 +1073,7 @@
                 const key = `chatHistory_${myName}`;
                 const history = JSON.parse(localStorage.getItem(key) || '[]');
                 history.forEach(msg => {
-                    conn.send({ type:'chat', text:msg.text, sender:msg.sender, time:msg.time, id:msg.id, replyTo:msg.replyTo, reactions:msg.reactions, type:msg.type, data:msg.data, mime:msg.mime, name:msg.name });
+                    conn.send({ type:'chat', text:msg.text, sender:msg.sender, time:msg.time, id:msg.id, replyTo:msg.replyTo, reactions:msg.reactions, type:msg.type, data:msg.data, mime:msg.mime, name:msg.name, status:msg.status });
                 });
                 broadcastChatMessage('🔹 ' + clientId + ' присоединился к чату', 'system');
                 const onlineList = Object.keys(clients);
@@ -1104,12 +1081,12 @@
             });
             conn.on('data', (data) => {
                 if (data.type === 'chat') {
-                    const msg = { text:data.text, sender:data.sender||clientId, time:new Date().toLocaleTimeString(), id:data.id, replyTo:data.replyTo, reactions:data.reactions, type:data.type };
+                    const msg = { text:data.text, sender:data.sender||clientId, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }), id:data.id, replyTo:data.replyTo, reactions:data.reactions, type:data.type, status:data.status || 'delivered' };
                     const key = `chatHistory_${myName}`;
                     let history = JSON.parse(localStorage.getItem(key) || '[]');
                     history.push(msg);
                     localStorage.setItem(key, JSON.stringify(history));
-                    broadcastChatMessage(msg.text, msg.sender, msg.time, msg.id, msg.replyTo, msg.reactions, msg.type);
+                    broadcastChatMessage(msg.text, msg.sender, msg.time, msg.id, msg.replyTo, msg.reactions, msg.type, msg.status);
                     if (data.id) conn.send({ type:'ack', id:data.id });
                 } else if (data.type === 'status') {
                     if (data.status === 'online') {
@@ -1120,7 +1097,7 @@
                 } else if (data.type === 'sticker') {
                     Object.values(clients).forEach(c => { if (c.open) c.send({ type:'sticker', data:data.data, sender:data.sender, id:data.id }); });
                     if (data.sender !== myName) {
-                        const msg = { type:'sticker', data:data.data, sender:data.sender, time:new Date().toLocaleTimeString(), id:data.id };
+                        const msg = { type:'sticker', data:data.data, sender:data.sender, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }), id:data.id };
                         const key = `chatHistory_${myName}`;
                         let history = JSON.parse(localStorage.getItem(key) || '[]');
                         history.push(msg);
@@ -1131,16 +1108,16 @@
                 } else if (data.type === 'file' || data.type === 'voice' || data.type === 'videoMsg') {
                     Object.values(clients).forEach(c => { if (c.open) c.send(data); });
                     if (data.sender !== myName) {
-                        const msg = { type:data.type, sender:data.sender, time:new Date().toLocaleTimeString(), id:data.id, data:data.data, mime:data.mime, name:data.name };
+                        const msg = { type:data.type, sender:data.sender, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }), id:data.id, data:data.data, mime:data.mime, name:data.name, status:data.status || 'delivered' };
                         const key = `chatHistory_${myName}`;
                         let history = JSON.parse(localStorage.getItem(key) || '[]');
                         history.push(msg);
                         localStorage.setItem(key, JSON.stringify(history));
                         const blob = base64ToBlob(data.data, data.mime);
                         const url = URL.createObjectURL(blob);
-                        if (data.type === 'file') displayFileMessage(data.sender, url, data.name, data.mime, blob.size, false, data.id);
-                        else if (data.type === 'voice') displayAudioMessage(data.sender, url, false, data.id);
-                        else if (data.type === 'videoMsg') displayVideoMessage(data.sender, url, false, data.id);
+                        if (data.type === 'file') displayFileMessage(data.sender, url, data.name, data.mime, blob.size, false, data.id, data.status);
+                        else if (data.type === 'voice') displayAudioMessage(data.sender, url, false, data.id, data.status);
+                        else if (data.type === 'videoMsg') displayVideoMessage(data.sender, url, false, data.id, data.status);
                     }
                     if (data.id) conn.send({ type:'ack', id:data.id });
                 } else if (data.type === 'typing') {
@@ -1166,21 +1143,17 @@
         function broadcastStatus(onlineList) {
             const statusMsg = { type: 'online_list', list: onlineList };
             Object.values(clients).forEach(c => { if (c.open) c.send(statusMsg); });
-            if (onlineList.length > 0) {
-                updateOnlineStatus(true, 'в сети (' + onlineList.length + ')');
-            } else {
-                updateOnlineStatus(false, 'нет сети');
-            }
+            // никаких обновлений верхнего статуса
         }
 
-        function broadcastChatMessage(text, sender, time, id, replyTo, reactions, type) {
-            const timeStr = time || new Date().toLocaleTimeString();
-            const msg = { type:'chat', text, sender, time:timeStr, id, replyTo, reactions, type:type||'text' };
+        function broadcastChatMessage(text, sender, time, id, replyTo, reactions, type, status) {
+            const timeStr = time || new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+            const msg = { type:'chat', text, sender, time:timeStr, id, replyTo, reactions, type:type||'text', status:status || 'delivered' };
             Object.values(clients).forEach(c => { if (c.open) c.send(msg); });
             if (sender !== myName) {
-                const msgToSave = { text, sender, time:timeStr, id, replyTo, reactions, type:type||'text' };
+                const msgToSave = { text, sender, time:timeStr, id, replyTo, reactions, type:type||'text', status:msg.status };
                 saveChatMessage(msgToSave);
-                addChatMessage(text, sender, timeStr, id, replyTo, reactions, type||'text', false);
+                addChatMessage(text, sender, timeStr, id, replyTo, reactions, type||'text', false, msg.status);
                 if (!isChatActive) {
                     unreadCount++;
                     updateBadge();
@@ -1196,6 +1169,12 @@
                 if (el) {
                     const ind = el.querySelector('.pending-indicator');
                     if (ind) ind.remove();
+                    // Обновляем статус
+                    const statusIcon = el.querySelector('.status-icon');
+                    if (statusIcon) {
+                        statusIcon.textContent = '✓✓';
+                        statusIcon.dataset.status = 'delivered';
+                    }
                 }
                 pendingMessages.splice(idx, 1);
             }
@@ -1207,9 +1186,10 @@
             if (data.id && sentIds.has(data.id)) return;
             const isMe = (data.sender === myName);
             if (data.type === 'chat') {
-                addChatMessage(data.text, data.sender, data.time, data.id, data.replyTo, data.reactions, data.type, isMe);
+                const status = data.status || 'delivered';
+                addChatMessage(data.text, data.sender, data.time, data.id, data.replyTo, data.reactions, data.type, isMe, status);
                 if (!isMe) {
-                    const msg = { text:data.text, sender:data.sender, time:data.time, id:data.id, replyTo:data.replyTo, reactions:data.reactions, type:data.type };
+                    const msg = { text:data.text, sender:data.sender, time:data.time, id:data.id, replyTo:data.replyTo, reactions:data.reactions, type:data.type, status };
                     saveChatMessage(msg);
                     if (!isChatActive) {
                         unreadCount++;
@@ -1219,14 +1199,10 @@
                 }
             } else if (data.type === 'status') {
                 if (data.status === 'online') {
-                    updateOnlineStatus(true, 'в сети');
+                    // можем обновить меню, но не трогаем верх
                 }
             } else if (data.type === 'online_list') {
-                if (data.list && data.list.length > 0) {
-                    updateOnlineStatus(true, 'в сети (' + data.list.length + ')');
-                } else {
-                    updateOnlineStatus(false, 'нет сети');
-                }
+                // не используем
             } else if (data.type === 'sticker') {
                 if (!isMe) {
                     const msg = { type:'sticker', data:data.data, sender:data.sender, time:data.time, id:data.id };
@@ -1239,8 +1215,9 @@
                 }
                 displayStickerMessage(data.sender, data.data, isMe, data.id);
             } else if (data.type === 'file' || data.type === 'voice' || data.type === 'videoMsg') {
+                const status = data.status || 'delivered';
                 if (!isMe) {
-                    const msg = { type:data.type, sender:data.sender, time:data.time, id:data.id, data:data.data, mime:data.mime, name:data.name };
+                    const msg = { type:data.type, sender:data.sender, time:data.time, id:data.id, data:data.data, mime:data.mime, name:data.name, status };
                     saveChatMessage(msg);
                     if (!isChatActive) {
                         unreadCount++;
@@ -1250,9 +1227,9 @@
                 }
                 const blob = base64ToBlob(data.data, data.mime);
                 const url = URL.createObjectURL(blob);
-                if (data.type === 'file') displayFileMessage(data.sender, url, data.name, data.mime, blob.size, isMe, data.id);
-                else if (data.type === 'voice') displayAudioMessage(data.sender, url, isMe, data.id);
-                else if (data.type === 'videoMsg') displayVideoMessage(data.sender, url, isMe, data.id);
+                if (data.type === 'file') displayFileMessage(data.sender, url, data.name, data.mime, blob.size, isMe, data.id, status);
+                else if (data.type === 'voice') displayAudioMessage(data.sender, url, isMe, data.id, status);
+                else if (data.type === 'videoMsg') displayVideoMessage(data.sender, url, isMe, data.id, status);
             } else if (data.type === 'typing') {
                 showTyping(data.sender);
             } else if (data.type === 'reaction') {
@@ -1260,7 +1237,7 @@
             } else if (data.type === 'delete') {
                 deleteMessageLocally(data.msgId);
             } else if (data.type === 'delete_self') {
-                // игнорируем (удаление у себя не рассылается)
+                // игнорируем
             }
         }
 
@@ -1408,7 +1385,6 @@
             isHost = false; clients = {}; myDataConnection = null; isConnecting = false;
             if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer=null; }
             updateMenuStatus(false, 'Отключено');
-            updateOnlineStatus(false);
         });
 
         // =================================================================
@@ -1527,9 +1503,9 @@
             const id = Date.now() + '-' + Math.random().toString(36).substr(2,6);
             sentIds.add(id);
             displayStickerMessage(myName, base64, true, id);
-            const msg = { type:'sticker', data:base64, sender:myName, time:new Date().toLocaleTimeString(), id };
+            const msg = { type:'sticker', data:base64, sender:myName, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }), id };
             saveChatMessage(msg);
-            pendingMessages.push({ id, type:'sticker', data:{emoji:base64}, sender:myName, time:new Date().toLocaleTimeString() });
+            pendingMessages.push({ id, type:'sticker', data:{emoji:base64}, sender:myName, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) });
             sendStickerInternal(base64, id);
             stickerPanel.classList.remove('active');
             vibrate();
@@ -1551,24 +1527,24 @@
             else div.classList.add('other');
             div.dataset.msgId = id;
             div.dataset.sender = sender;
-            const time = new Date().toLocaleTimeString();
+            const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
             const img = document.createElement('img');
             img.className = 'sticker-img';
             img.src = base64;
             const senderColor = (sender === myName) ? myColor : '#ffcc00';
             div.innerHTML = `<div class="sender" style="color:${senderColor}">${sender}</div>`;
             div.appendChild(img);
-            const timeSpan = document.createElement('span');
-            timeSpan.className = 'time';
-            timeSpan.textContent = time;
-            div.appendChild(timeSpan);
+            const footer = document.createElement('div');
+            footer.className = 'msg-footer';
+            footer.innerHTML = `<span class="time">${time}</span>`;
+            div.appendChild(footer);
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             addMessageInteractions(div, id, sender);
         }
 
         // =================================================================
-        // 12. КНОПКА СКРЕПКИ (один клик – стикеры, двойной – файлы)
+        // 12. КНОПКА СКРЕПКИ
         // =================================================================
         let attachClickTimer = null;
         attachBtn.addEventListener('click', (e) => {
@@ -1595,7 +1571,6 @@
             if (!files.length) return;
             for (const file of files) {
                 if (file.type.startsWith('image/')) {
-                    // Открываем редактор для картинок
                     openImageEditor(file);
                 } else {
                     sendFile(file, file.type);
@@ -1640,23 +1615,28 @@
             }
             const id = Date.now() + '-' + Math.random().toString(36).substr(2,6);
             sentIds.add(id);
-            const msgText = `⏰ [отложено на ${target.toLocaleTimeString()}] ${text}`;
-            addChatMessage(msgText, myName, null, id, null, null, 'text', true);
-            const msg = { text:msgText, sender:myName, time:new Date().toLocaleTimeString(), id, replyTo:null, reactions:null, type:'text' };
+            const msgText = `⏰ [отложено на ${target.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}] ${text}`;
+            addChatMessage(msgText, myName, null, id, null, null, 'text', true, 'sent');
+            const msg = { text:msgText, sender:myName, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }), id, replyTo:null, reactions:null, type:'text', status:'sent' };
             saveChatMessage(msg);
 
             const timer = setTimeout(() => {
                 const realId = Date.now() + '-' + Math.random().toString(36).substr(2,6);
                 sentIds.add(realId);
-                addChatMessage(text, myName, null, realId, null, null, 'text', true);
-                const realMsg = { text, sender:myName, time:new Date().toLocaleTimeString(), id:realId, replyTo:null, reactions:null, type:'text' };
+                addChatMessage(text, myName, null, realId, null, null, 'text', true, 'sent');
+                const realMsg = { text, sender:myName, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }), id:realId, replyTo:null, reactions:null, type:'text', status:'sent' };
                 saveChatMessage(realMsg);
-                pendingMessages.push({ id:realId, type:'chat', data:{text}, sender:myName, time:new Date().toLocaleTimeString() });
+                pendingMessages.push({ id:realId, type:'chat', data:{text}, sender:myName, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) });
                 sendChatMessageInternal(text, realId, false, null);
                 const el = document.querySelector(`[data-msg-id="${id}"]`);
                 if (el) {
                     const content = el.querySelector('.content');
                     if (content) content.textContent = `✅ ${text} (отправлено)`;
+                    const statusIcon = el.querySelector('.status-icon');
+                    if (statusIcon) {
+                        statusIcon.textContent = '✓✓';
+                        statusIcon.dataset.status = 'delivered';
+                    }
                 }
                 vibrate();
             }, delayMs);
@@ -1664,7 +1644,7 @@
             scheduledTimers.push(timer);
             scheduleDialog.classList.remove('active');
             chatInput.value = '';
-            alert(`Сообщение будет отправлено в ${target.toLocaleTimeString()}`);
+            alert(`Сообщение будет отправлено в ${target.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`);
         });
 
         // =================================================================
@@ -1730,7 +1710,6 @@
             if (editorCropMode) {
                 alert('Нажмите и перетащите мышью или пальцем по картинке, чтобы выделить область.');
             } else {
-                // Применить обрезку
                 if (cropRect) {
                     const canvas = editorCanvas;
                     const ctx = canvas.getContext('2d');
@@ -1773,7 +1752,6 @@
             }
         });
 
-        // Для тач-устройств
         editorCanvas.addEventListener('touchstart', (e) => {
             if (!editorCropMode) return;
             e.preventDefault();
@@ -1875,11 +1853,11 @@
                     const url = URL.createObjectURL(blob);
                     const duration = Math.round(blob.size / 16000);
                     const durationStr = `${Math.floor(duration/60)}:${(duration%60).toString().padStart(2,'0')}`;
-                    addChatMessage(durationStr, myName, null, id, null, null, 'voice', true);
+                    addChatMessage(durationStr, myName, null, id, null, null, 'voice', true, 'sent');
                     const base64 = await blobToBase64(blob);
-                    const msg = { type:'voice', sender:myName, time:new Date().toLocaleTimeString(), id, data:base64, mime:'audio/ogg' };
+                    const msg = { type:'voice', sender:myName, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }), id, data:base64, mime:'audio/ogg', status:'sent' };
                     saveChatMessage(msg);
-                    pendingMessages.push({ id, type:'voice', data:{blob}, sender:myName, time:new Date().toLocaleTimeString() });
+                    pendingMessages.push({ id, type:'voice', data:{blob}, sender:myName, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) });
                     sendVoiceInternal(blob, id);
                     stream.getTracks().forEach(t=>t.stop());
                     if (waveElement) { waveElement.remove(); waveElement=null; }
@@ -1914,13 +1892,13 @@
             if (isHost) {
                 blobToBase64(blob).then(b64 => {
                     Object.values(clients).forEach(c => {
-                        if (c.open) c.send({ type:'voice', file:blob, sender:myName, id, data:b64, mime:'audio/ogg' });
+                        if (c.open) c.send({ type:'voice', file:blob, sender:myName, id, data:b64, mime:'audio/ogg', status:'sent' });
                     });
                 });
                 confirmPending(id);
             } else if (myDataConnection && myDataConnection.open) {
                 blobToBase64(blob).then(b64 => {
-                    myDataConnection.send({ type:'voice', file:blob, sender:myName, id, data:b64, mime:'audio/ogg' });
+                    myDataConnection.send({ type:'voice', file:blob, sender:myName, id, data:b64, mime:'audio/ogg', status:'sent' });
                 });
             } else { console.warn('Нет соединения, голосовое сохранено в pending'); }
         }
@@ -1938,14 +1916,13 @@
             }
             voiceClickTimer = setTimeout(() => {
                 voiceClickTimer = null;
-                // голосовое уже обработано
             }, 300);
         });
 
         // =================================================================
-        // 17. ЧАТ – ОТОБРАЖЕНИЕ
+        // 17. ЧАТ – ОТОБРАЖЕНИЕ (с футером и статусом)
         // =================================================================
-        function addChatMessage(text, sender, time, id, replyTo, reactions, type, isMe) {
+        function addChatMessage(text, sender, time, id, replyTo, reactions, type, isMe, status) {
             const div = document.createElement('div');
             div.className = 'msg';
             if (type === 'videoMsg') {
@@ -1972,7 +1949,17 @@
                 reactionsHtml += `</div>`;
             }
             const senderColor = (sender === myName) ? myColor : '#ffcc00';
-            const timeStr = time || new Date().toLocaleTimeString();
+            const timeStr = time || new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+
+            // Футер с временем и статусом
+            let footerHtml = `<span class="time">${timeStr}</span>`;
+            if (isMe) {
+                let statusIcon = '';
+                if (status === 'sent') statusIcon = '✓';
+                else if (status === 'delivered') statusIcon = '✓✓';
+                else statusIcon = '✓✓'; // fallback
+                footerHtml += `<span class="status-icon" data-status="${status || 'delivered'}">${statusIcon}</span>`;
+            }
 
             let innerHtml = '';
             if (type !== 'videoMsg') {
@@ -1982,20 +1969,13 @@
             }
             div.innerHTML = innerHtml;
 
-            if (type === 'videoMsg') {
-                const timeSpan = document.createElement('div');
-                timeSpan.style.cssText = 'font-size:9px; color:var(--txt3); opacity:0.7; text-align:center; margin-top:2px;';
-                timeSpan.textContent = timeStr;
-                div.appendChild(timeSpan);
-            } else {
-                const timeSpan = document.createElement('span');
-                timeSpan.className = 'time';
-                timeSpan.textContent = timeStr;
-                div.appendChild(timeSpan);
-            }
+            const footer = document.createElement('div');
+            footer.className = 'msg-footer';
+            footer.innerHTML = footerHtml;
+            div.appendChild(footer);
 
             chatMessages.appendChild(div);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            autoScrollIfNeeded();
 
             if (type === 'voice') {
                 const btn = div.querySelector('.play-audio');
@@ -2016,11 +1996,8 @@
                 const circle = div.querySelector('.circle-video');
                 if (video && circle) {
                     circle.addEventListener('click', () => {
-                        if (video.paused) {
-                            video.play();
-                        } else {
-                            video.pause();
-                        }
+                        if (video.paused) video.play();
+                        else video.pause();
                     });
                 }
             }
@@ -2029,13 +2006,13 @@
             return div;
         }
 
-        function displayFileMessage(sender, url, name, mime, size, isMe, id) {
+        function displayFileMessage(sender, url, name, mime, size, isMe, id, status) {
             const div = document.createElement('div');
             div.className = 'msg';
             if (isMe) div.classList.add('me');
             else div.classList.add('other');
             div.dataset.msgId = id; div.dataset.sender = sender;
-            const time = new Date().toLocaleTimeString();
+            const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
             let icon = '📄';
             let content = '';
             if (mime.startsWith('image/')) {
@@ -2055,48 +2032,66 @@
             }
             const senderColor = (sender === myName) ? myColor : '#ffcc00';
             div.innerHTML = `<div class="sender" style="color:${senderColor}">${sender}</div>${content}`;
-            const timeSpan = document.createElement('span');
-            timeSpan.className = 'time';
-            timeSpan.textContent = time;
-            div.appendChild(timeSpan);
+            let footerHtml = `<span class="time">${time}</span>`;
+            if (isMe) {
+                const stat = status || 'delivered';
+                const iconStat = stat === 'sent' ? '✓' : '✓✓';
+                footerHtml += `<span class="status-icon" data-status="${stat}">${iconStat}</span>`;
+            }
+            const footer = document.createElement('div');
+            footer.className = 'msg-footer';
+            footer.innerHTML = footerHtml;
+            div.appendChild(footer);
             chatMessages.appendChild(div);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            autoScrollIfNeeded();
             addMessageInteractions(div, id, sender);
         }
 
-        function displayAudioMessage(sender, url, isMe, id) {
+        function displayAudioMessage(sender, url, isMe, id, status) {
             const div = document.createElement('div');
             div.className = 'msg';
             if (isMe) div.classList.add('me');
             else div.classList.add('other');
             div.dataset.msgId = id; div.dataset.sender = sender;
-            const time = new Date().toLocaleTimeString();
+            const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
             const senderColor = (sender === myName) ? myColor : '#ffcc00';
             div.innerHTML = `<div class="sender" style="color:${senderColor}">${sender}</div><audio controls src="${url}" style="max-width:180px;"></audio>`;
-            const timeSpan = document.createElement('span');
-            timeSpan.className = 'time';
-            timeSpan.textContent = time;
-            div.appendChild(timeSpan);
+            let footerHtml = `<span class="time">${time}</span>`;
+            if (isMe) {
+                const stat = status || 'delivered';
+                const iconStat = stat === 'sent' ? '✓' : '✓✓';
+                footerHtml += `<span class="status-icon" data-status="${stat}">${iconStat}</span>`;
+            }
+            const footer = document.createElement('div');
+            footer.className = 'msg-footer';
+            footer.innerHTML = footerHtml;
+            div.appendChild(footer);
             chatMessages.appendChild(div);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            autoScrollIfNeeded();
             addMessageInteractions(div, id, sender);
         }
 
-        function displayVideoMessage(sender, url, isMe, id) {
+        function displayVideoMessage(sender, url, isMe, id, status) {
             const div = document.createElement('div');
             div.className = 'msg msg-video';
             if (isMe) div.classList.add('me');
             else div.classList.add('other');
             div.dataset.msgId = id; div.dataset.sender = sender;
-            const time = new Date().toLocaleTimeString();
+            const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
             const videoHtml = `<div class="circle-video"><video src="${url}" controls></video></div>`;
             div.innerHTML = videoHtml;
-            const timeSpan = document.createElement('div');
-            timeSpan.style.cssText = 'font-size:9px; color:var(--txt3); opacity:0.7; text-align:center; margin-top:2px;';
-            timeSpan.textContent = time;
-            div.appendChild(timeSpan);
+            let footerHtml = `<span class="time">${time}</span>`;
+            if (isMe) {
+                const stat = status || 'delivered';
+                const iconStat = stat === 'sent' ? '✓' : '✓✓';
+                footerHtml += `<span class="status-icon" data-status="${stat}">${iconStat}</span>`;
+            }
+            const footer = document.createElement('div');
+            footer.className = 'msg-footer';
+            footer.innerHTML = footerHtml;
+            div.appendChild(footer);
             chatMessages.appendChild(div);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            autoScrollIfNeeded();
             const video = div.querySelector('video');
             const circle = div.querySelector('.circle-video');
             if (video && circle) {
@@ -2140,10 +2135,8 @@
                     target.tagName === 'IMG' || target.closest('.reactions')) {
                     return;
                 }
-                // Если клик на картинке – открыть редактор
                 if (target.tagName === 'IMG' && target.src) {
                     const url = target.src;
-                    // Скачиваем картинку и открываем редактор
                     fetch(url).then(res => res.blob()).then(blob => {
                         const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
                         openImageEditor(file);
@@ -2178,17 +2171,17 @@
         });
 
         // =================================================================
-        // 19. ОТПРАВКА СООБЩЕНИЙ (кнопка отправки и долгое нажатие)
+        // 19. ОТПРАВКА СООБЩЕНИЙ
         // =================================================================
         function sendTextMessage() {
             const text = chatInput.value.trim();
             if (!text) return;
             const id = Date.now() + '-' + Math.random().toString(36).substr(2,6);
             sentIds.add(id);
-            addChatMessage(text, myName, null, id, replyTo, null, 'text', true);
-            const msg = { text, sender:myName, time:new Date().toLocaleTimeString(), id, replyTo, reactions:null, type:'text' };
+            addChatMessage(text, myName, null, id, replyTo, null, 'text', true, 'sent');
+            const msg = { text, sender:myName, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }), id, replyTo, reactions:null, type:'text', status:'sent' };
             saveChatMessage(msg);
-            pendingMessages.push({ id, type:'chat', data:{text}, sender:myName, time:new Date().toLocaleTimeString() });
+            pendingMessages.push({ id, type:'chat', data:{text}, sender:myName, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) });
             console.log('📤 Отправка сообщения:', text, 'id:', id);
             sendChatMessageInternal(text, id, false, replyTo);
             chatInput.value = '';
@@ -2207,35 +2200,43 @@
             const reply = replyToParam || replyTo;
             if (isHost) {
                 console.log('📤 Хост рассылает всем');
-                broadcastChatMessage(text, myName, null, id, reply, null, 'text');
+                broadcastChatMessage(text, myName, null, id, reply, null, 'text', 'sent');
                 confirmPending(id);
             } else if (myDataConnection && myDataConnection.open) {
                 console.log('📤 Клиент отправляет через dataConnection');
-                myDataConnection.send({ type:'chat', text, sender:myName, id, replyTo:reply });
+                myDataConnection.send({ type:'chat', text, sender:myName, id, replyTo:reply, status:'sent' });
             } else {
                 console.warn('Нет соединения, сообщение сохранено в pending');
+                // попробуем переподключить
+                if (!myDataConnection) {
+                    reconnectDataChannel();
+                }
             }
         }
 
-        // Кнопка отправки (клик)
-        sendBtn.addEventListener('click', sendTextMessage);
-
-        // Долгое нажатие на кнопку отправки для отложки
-        let sendPressTimer = null;
-        sendBtn.addEventListener('mousedown', () => {
-            sendPressTimer = setTimeout(() => {
-                openScheduleDialog();
-            }, 400);
-        });
-        sendBtn.addEventListener('mouseup', () => { clearTimeout(sendPressTimer); });
-        sendBtn.addEventListener('mouseleave', () => { clearTimeout(sendPressTimer); });
-        sendBtn.addEventListener('touchstart', () => {
-            sendPressTimer = setTimeout(() => {
-                openScheduleDialog();
-            }, 400);
-        });
-        sendBtn.addEventListener('touchend', () => { clearTimeout(sendPressTimer); });
-        sendBtn.addEventListener('touchcancel', () => { clearTimeout(sendPressTimer); });
+        function reconnectDataChannel() {
+            if (isHost) return;
+            if (peer && myDataConnection && !myDataConnection.open) {
+                try { myDataConnection.close(); } catch(e) {}
+                myDataConnection = null;
+                const conn = peer.connect(ROOM_ID);
+                conn.on('open', () => {
+                    myDataConnection = conn;
+                    console.log('🟢 Data-канал переподключён');
+                    conn.send({ type: 'chat', text: '👋 Переподключился', sender: myName });
+                    flushPendingMessages();
+                    conn.on('data', (data) => handleIncomingData(data));
+                    conn.on('close', () => {
+                        console.warn('❌ Data-канал закрыт');
+                        myDataConnection = null;
+                        setTimeout(reconnectDataChannel, 3000);
+                    });
+                });
+                conn.on('error', (err) => {
+                    console.error('Ошибка переподключения:', err);
+                });
+            }
+        }
 
         // =================================================================
         // 20. КОПИРОВАНИЕ ТЕКСТА
@@ -2268,15 +2269,6 @@
             }
         });
 
-        moreCopy.addEventListener('click', () => {
-            if (selectedMsgId) {
-                copyMessageText(selectedMsgId);
-                moreMenu.classList.remove('active');
-            } else {
-                alert('Выделите сообщение');
-            }
-        });
-
         // =================================================================
         // 21. УДАЛЕНИЕ У СЕБЯ
         // =================================================================
@@ -2284,7 +2276,6 @@
             const el = document.querySelector(`[data-msg-id="${msgId}"]`);
             if (el) {
                 el.remove();
-                // Удаляем из истории
                 const key = `chatHistory_${myName}`;
                 let history = JSON.parse(localStorage.getItem(key) || '[]');
                 history = history.filter(msg => msg.id !== msgId);
@@ -2296,15 +2287,6 @@
             if (selectedMsgId) {
                 deleteSelfMessage(selectedMsgId);
                 contextMenu.classList.remove('active');
-            }
-        });
-
-        moreDeleteSelf.addEventListener('click', () => {
-            if (selectedMsgId) {
-                deleteSelfMessage(selectedMsgId);
-                moreMenu.classList.remove('active');
-            } else {
-                alert('Выделите сообщение');
             }
         });
 
@@ -2419,8 +2401,12 @@
         function scrollToBottom() {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+        function autoScrollIfNeeded() {
+            if (!isScrolledUp) {
+                scrollToBottom();
+            }
+        }
 
-        // Отслеживаем прокрутку, чтобы показывать кнопку вниз
         chatMessages.addEventListener('scroll', () => {
             const threshold = 100;
             const isBottom = chatMessages.scrollTop >= chatMessages.scrollHeight - chatMessages.clientHeight - threshold;
@@ -2438,23 +2424,6 @@
             scrollDownBtn.classList.remove('show');
         });
 
-        // При добавлении нового сообщения авто-скролл, если не прокручено вверх
-        function autoScrollIfNeeded() {
-            if (!isScrolledUp) {
-                scrollToBottom();
-            }
-        }
-
-        // Переопределим addChatMessage и другие функции добавления, чтобы вызывать autoScrollIfNeeded
-        // Мы уже добавили scrollToBottom в конце addChatMessage, но теперь добавим условие
-        // Уже есть scrollToBottom, но заменим его на autoScrollIfNeeded
-        // Для этого перепишем addChatMessage – заменим scrollToBottom на autoScrollIfNeeded
-
-        // Но мы уже написали много кода, проще добавить вызов autoScrollIfNeeded после каждого добавления сообщения.
-        // Я добавлю это прямо в addChatMessage.
-
-        // Перепишу addChatMessage (уже есть) – добавлю в конце autoScrollIfNeeded();
-
         // =================================================================
         // 24. ОЧИСТКА ИСТОРИИ (через меню трёх точек)
         // =================================================================
@@ -2464,7 +2433,7 @@
         });
 
         // =================================================================
-        // 25. МЕНЮ ТРЁХ ТОЧЕК (сверху справа)
+        // 25. МЕНЮ ТРЁХ ТОЧЕК
         // =================================================================
         moreBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -2637,11 +2606,11 @@
                     const id = Date.now() + '-' + Math.random().toString(36).substr(2,6);
                     sentIds.add(id);
                     const url = URL.createObjectURL(blob);
-                    addChatMessage(url, myName, null, id, null, null, 'videoMsg', true);
+                    addChatMessage(url, myName, null, id, null, null, 'videoMsg', true, 'sent');
                     const base64 = await blobToBase64(blob);
-                    const msg = { type:'videoMsg', sender:myName, time:new Date().toLocaleTimeString(), id, data:base64, mime:'video/mp4' };
+                    const msg = { type:'videoMsg', sender:myName, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }), id, data:base64, mime:'video/mp4', status:'sent' };
                     saveChatMessage(msg);
-                    pendingMessages.push({ id, type:'videoMsg', data:{blob}, sender:myName, time:new Date().toLocaleTimeString() });
+                    pendingMessages.push({ id, type:'videoMsg', data:{blob}, sender:myName, time:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) });
                     sendVideoMsgInternal(blob, id);
                     closeRecorderCircle();
                     vibrate();
@@ -2730,13 +2699,13 @@
             if (isHost) {
                 blobToBase64(blob).then(b64 => {
                     Object.values(clients).forEach(c => {
-                        if (c.open) c.send({ type:'videoMsg', file:blob, sender:myName, id, data:b64, mime:'video/mp4' });
+                        if (c.open) c.send({ type:'videoMsg', file:blob, sender:myName, id, data:b64, mime:'video/mp4', status:'sent' });
                     });
                 });
                 confirmPending(id);
             } else if (myDataConnection && myDataConnection.open) {
                 blobToBase64(blob).then(b64 => {
-                    myDataConnection.send({ type:'videoMsg', file:blob, sender:myName, id, data:b64, mime:'video/mp4' });
+                    myDataConnection.send({ type:'videoMsg', file:blob, sender:myName, id, data:b64, mime:'video/mp4', status:'sent' });
                 });
             } else { console.warn('Нет соединения, кружок сохранён в pending'); }
         }
@@ -2780,6 +2749,13 @@
                 }
             });
             observer.observe(chatTab, { attributes: true, attributeFilter: ['class'] });
+
+            // Периодическая проверка pending
+            setInterval(() => {
+                if (myDataConnection && myDataConnection.open && pendingMessages.length > 0) {
+                    flushPendingMessages();
+                }
+            }, 5000);
         }
 
         window.addEventListener('beforeunload', () => {
@@ -2802,16 +2778,8 @@
             });
         });
 
-        // Переопределим autoScrollIfNeeded для использования в addChatMessage
-        const originalAddChatMessage = addChatMessage;
-        addChatMessage = function(text, sender, time, id, replyTo, reactions, type, isMe) {
-            const result = originalAddChatMessage(text, sender, time, id, replyTo, reactions, type, isMe);
-            autoScrollIfNeeded();
-            return result;
-        };
-
         init();
-        console.log('🚀 арбузник v.4.3 – все фичи готовы!');
+        console.log('🚀 арбузник v.4.4 – время без секунд, статус доставки!');
     </script>
 </body>
 </html>
