@@ -6,7 +6,6 @@
     <title>манго арбузник</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        /* ===== ГЛОБАЛЬНЫЕ СТИЛИ ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg: #0a0a0a; --bg2: #141414; --bg3: #1c1c1c; --bg4: #252525; --bg5: #2e2e2e;
@@ -54,6 +53,7 @@
         .chat-messages .msg .time { font-size: 9px; color: var(--txt3); margin-left: 6px; }
         .chat-messages .msg .reply-to { font-size: 11px; color: var(--ac); background: var(--bg3); padding: 2px 8px; border-radius: 8px; margin-bottom: 3px; border-left: 3px solid var(--ac); }
         .chat-messages .msg .content { word-wrap: break-word; }
+        .chat-messages .msg .sticker-img { max-width: 128px; max-height: 128px; border-radius: 12px; display: block; margin: 4px 0; }
         .chat-messages .msg .circle-video { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin: 4px 0; cursor: pointer; background: #000; }
         .chat-messages .msg .circle-video video { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
         .chat-messages .msg .audio-preview { display: flex; align-items: center; gap: 8px; background: var(--bg3); padding: 4px 12px; border-radius: 40px; margin-top: 4px; max-width: 180px; }
@@ -71,6 +71,7 @@
         .chat-input-area button.primary { color: var(--ac); font-size: 20px; }
         .chat-input-area button.primary:hover { color: var(--ach); }
         .chat-input-area button.recording { color: #a55; }
+        .chat-input-area button.sticker-btn { font-size: 20px; }
         .voice-wave { display: inline-flex; align-items: center; gap: 3px; height: 18px; margin-left: 4px; }
         .voice-wave span { display: block; width: 3px; height: 100%; background: var(--ac); border-radius: 3px; animation: wave .6s infinite alternate ease-in-out; }
         .voice-wave span:nth-child(2) { animation-delay:.1s; height:60%; }
@@ -93,6 +94,13 @@
         .btn-default:hover { background: var(--br); }
         .theme-toggle { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
         .theme-toggle input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--ac); cursor: pointer; }
+        .sticker-upload { margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .sticker-upload label { background: var(--bg3); padding: 6px 14px; border-radius: 30px; border: 1px solid var(--br); cursor: pointer; font-size: 13px; transition: .15s; }
+        .sticker-upload label:hover { background: var(--br); }
+        .sticker-upload input[type="file"] { display: none; }
+        .sticker-upload .sticker-preview { display: flex; gap: 4px; flex-wrap: wrap; }
+        .sticker-upload .sticker-preview img { width: 48px; height: 48px; border-radius: 8px; object-fit: contain; background: var(--bg3); border: 1px solid var(--br); padding: 2px; }
+        .sticker-upload .sticker-preview .remove-sticker { position: relative; cursor: pointer; font-size: 14px; color: #f44; margin-left: -16px; background: var(--bg); border-radius: 50%; width: 16px; height: 16px; text-align: center; line-height: 16px; }
         .recording-modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.92); display:none; align-items:center; justify-content:center; z-index:9999; flex-direction:column; animation:fadeIn .3s; }
         .recording-modal.active { display:flex; }
         @keyframes fadeIn { 0% { opacity:0; } 100% { opacity:1; } }
@@ -135,6 +143,11 @@
         .audio-player .close { background:0 0; border:0; color:var(--txt2); font-size:14px; cursor:pointer; padding:0 2px; }
         .audio-player .close:hover { color:var(--txt); }
         .audio-player .playpause { background:0 0; border:0; color:var(--ac); font-size:18px; cursor:pointer; padding:0 2px; }
+        .sticker-panel { display: none; position: absolute; bottom: 60px; left: 10px; background: var(--bg2); border-radius: 16px; padding: 8px; border: 1px solid var(--br); max-width: 320px; flex-wrap: wrap; gap: 4px; z-index: 100; max-height: 200px; overflow-y: auto; }
+        .sticker-panel.active { display: flex; }
+        .sticker-panel img { width: 64px; height: 64px; border-radius: 12px; cursor: pointer; object-fit: contain; background: var(--bg3); padding: 4px; border: 1px solid transparent; transition: .1s; }
+        .sticker-panel img:hover { border-color: var(--ac); transform: scale(1.05); }
+        .sticker-panel .empty-stickers { color: var(--txt3); font-size: 13px; padding: 12px; text-align: center; width: 100%; }
         @media(max-width:700px){
             .sidebar{width:50px}
             .sidebar .nav-item{width:36px;height:36px;font-size:16px}
@@ -146,6 +159,8 @@
             .recording-modal .controls .record-btn{width:44px;height:44px}
             .context-menu{min-width:120px}
             .controls-room button{font-size:11px;padding:4px 10px}
+            .sticker-panel { max-width: 200px; }
+            .sticker-panel img { width: 48px; height: 48px; }
         }
         ::-webkit-scrollbar { width:3px; }
         ::-webkit-scrollbar-track { background: var(--bg2); }
@@ -213,12 +228,16 @@
                         <span>Ответ на: <span id="replyText"></span></span>
                         <span class="cancel-reply" id="cancelReply">✕</span>
                     </div>
-                    <div class="chat-input-area">
-                        <button id="attachBtn">📎</button>
-                        <button id="voiceBtn">🎙️</button>
-                        <button id="videoMsgBtn">🎥</button>
-                        <input type="text" id="chatInput" placeholder="Сообщение..." />
-                        <button class="primary" id="chatSendBtn">➤</button>
+                    <div style="position:relative;">
+                        <div class="chat-input-area">
+                            <button class="sticker-btn" id="stickerBtn">😊</button>
+                            <button id="attachBtn">📎</button>
+                            <button id="voiceBtn">🎙️</button>
+                            <button id="videoMsgBtn">🎥</button>
+                            <input type="text" id="chatInput" placeholder="Сообщение..." />
+                            <button class="primary" id="chatSendBtn">➤</button>
+                        </div>
+                        <div class="sticker-panel" id="stickerPanel"></div>
                     </div>
                     <input type="file" id="fileInput" accept="image/*,video/*,audio/*" style="display:none" multiple>
                 </div>
@@ -245,6 +264,14 @@
                         <div class="theme-toggle">
                             <input type="checkbox" id="lightThemeToggle">
                             <span>Включить</span>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label>📦 Стикеры</label>
+                        <div class="sticker-upload">
+                            <label for="stickerUpload">➕ Загрузить стикер</label>
+                            <input type="file" id="stickerUpload" accept="image/png,image/webp,image/jpeg" multiple>
+                            <div class="sticker-preview" id="stickerPreview"></div>
                         </div>
                     </div>
                 </div>
@@ -287,6 +314,10 @@
         const fileInput = document.getElementById('fileInput');
         const voiceBtn = document.getElementById('voiceBtn');
         const videoMsgBtn = document.getElementById('videoMsgBtn');
+        const stickerBtn = document.getElementById('stickerBtn');
+        const stickerPanel = document.getElementById('stickerPanel');
+        const stickerUpload = document.getElementById('stickerUpload');
+        const stickerPreview = document.getElementById('stickerPreview');
         const userRadios = document.querySelectorAll('input[name="userChoice"]');
         const zoomSlider = document.getElementById('zoomSlider');
         const zoomValue = document.getElementById('zoomValue');
@@ -334,7 +365,23 @@
         let replyTo = null, selectedMsgId = null;
 
         // =================================================================
-        // 1. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (BASE64)
+        // 1. РАБОТА С LOCALSTORAGE (стикеры)
+        // =================================================================
+        const STICKERS_KEY = 'mango_stickers';
+
+        function getStickers() {
+            try {
+                const data = localStorage.getItem(STICKERS_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch { return []; }
+        }
+
+        function saveStickers(stickers) {
+            localStorage.setItem(STICKERS_KEY, JSON.stringify(stickers));
+        }
+
+        // =================================================================
+        // 2. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (BASE64)
         // =================================================================
         function blobToBase64(blob) {
             return new Promise((resolve) => {
@@ -352,7 +399,7 @@
         }
 
         // =================================================================
-        // 2. ЧАСЫ И ЗАГРУЗКА
+        // 3. ЧАСЫ И ЗАГРУЗКА
         // =================================================================
         function updateClock() {
             const now = new Date();
@@ -365,7 +412,7 @@
         });
 
         // =================================================================
-        // 3. НАСТРОЙКИ И ИСТОРИЯ
+        // 4. НАСТРОЙКИ И ИСТОРИЯ
         // =================================================================
         function loadSettings() {
             const savedUser = localStorage.getItem('userChoice');
@@ -377,6 +424,7 @@
             const savedTheme = localStorage.getItem('lightTheme') === 'true';
             lightThemeToggle.checked = savedTheme; applyTheme(savedTheme);
             loadChatHistoryForUser(myName);
+            renderStickers();
         }
 
         function setUser(choice) {
@@ -405,6 +453,9 @@
                                 else if (msg.type === 'videoMsg') displayVideoMessage(msg.sender, url, isMe, msg.id);
                                 continue;
                             }
+                        } else if (msg.type === 'sticker') {
+                            displayStickerMessage(msg.sender, msg.data, isMe, msg.id);
+                            continue;
                         }
                         addChatMessage(msg.text, msg.sender, msg.time, msg.id, msg.replyTo, msg.reactions, msg.type, isMe);
                     }
@@ -420,7 +471,7 @@
         }
 
         // =================================================================
-        // 4. МОДАЛКА ВЫБОРА
+        // 5. МОДАЛКА ВЫБОРА
         // =================================================================
         function showModal() { modal.classList.remove('hidden'); modalKarasik.classList.remove('active-choice'); modalKater.classList.remove('active-choice'); }
         function hideModal() { modal.classList.add('hidden'); initConnection(); }
@@ -428,7 +479,7 @@
         modalKater.addEventListener('click', ()=>{ setUser('kater'); hideModal(); });
 
         // =================================================================
-        // 5. КАМЕРА / МИКРОФОН
+        // 6. КАМЕРА / МИКРОФОН
         // =================================================================
         async function startLocalStream() {
             if (localStream) return localStream;
@@ -443,7 +494,7 @@
         }
 
         // =================================================================
-        // 6. ПОДКЛЮЧЕНИЕ
+        // 7. ПОДКЛЮЧЕНИЕ (сокращённо, как в прошлой версии)
         // =================================================================
         function initConnection() {
             if (isConnecting) return;
@@ -451,107 +502,64 @@
             if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer=null; }
             tryConnect();
         }
-
         function tryConnect() {
             if (peer) { peer.destroy(); peer=null; }
             const uniqueId = ROOM_ID + '-' + Date.now() + '-' + Math.random().toString(36).substr(2,6);
             peer = new Peer(uniqueId, {
-                host: '0.peerjs.com',
-                port: 443,
-                path: '/',
+                host: '0.peerjs.com', port: 443, path: '/',
                 config: {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
                         { urls: 'stun:stun1.l.google.com:19302' },
                         { urls: 'stun:stun2.l.google.com:19302' },
-                        { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443'], username: 'openrelayproject', credential: 'openrelayproject' },
-                        { urls: ['turn:global.turn.twilio.com:3478?transport=udp', 'turn:global.turn.twilio.com:3478?transport=tcp'], username: '2d0c2eb0d1f5f7b6d9e2b5c8f3a6e7d9', credential: 'q3k9w7f2' }
+                        { urls: ['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'], username:'openrelayproject', credential:'openrelayproject' },
+                        { urls: ['turn:global.turn.twilio.com:3478?transport=udp','turn:global.turn.twilio.com:3478?transport=tcp'], username:'2d0c2eb0d1f5f7b6d9e2b5c8f3a6e7d9', credential:'q3k9w7f2' }
                     ]
                 }
             });
             let established = false;
-            let timeoutId = setTimeout(() => {
-                if (!established) {
-                    if (peer) peer.destroy();
-                    setTimeout(() => { initConnection(); }, 3000);
-                    isConnecting = false;
-                }
-            }, 10000);
-
-            peer.on('open', (id) => {
-                statusEl.textContent = '🟢 Соединение с сервером';
-                statusEl.className = 'status online';
-                connectToRoom();
-            });
-            peer.on('error', (err) => {
-                if (err.type === 'peer-unavailable') { becomeHost(); }
-                else { statusEl.textContent = '❌ Ошибка: ' + err.message; statusEl.className = 'status offline'; isConnecting = false; setTimeout(() => { initConnection(); }, 5000); }
-            });
-
+            let timeoutId = setTimeout(() => { if (!established) { if (peer) peer.destroy(); setTimeout(()=>initConnection(),3000); isConnecting=false; } }, 10000);
+            peer.on('open', () => { statusEl.textContent='🟢 Соединение с сервером'; statusEl.className='status online'; connectToRoom(); });
+            peer.on('error', (err) => { if (err.type === 'peer-unavailable') { becomeHost(); } else { statusEl.textContent='❌ '+err.message; statusEl.className='status offline'; isConnecting=false; setTimeout(()=>initConnection(),5000); } });
             function connectToRoom() {
                 const conn = peer.connect(ROOM_ID);
                 conn.on('open', () => {
-                    established = true;
-                    if (timeoutId) clearTimeout(timeoutId);
+                    established = true; if (timeoutId) clearTimeout(timeoutId);
                     myDataConnection = conn;
                     conn.send({ type: 'chat', text: '👋 Я здесь', sender: myName });
                     flushPendingMessages();
                     conn.on('data', (data) => handleIncomingData(data));
-                    conn.on('close', () => {
-                        statusEl.textContent = '❌ Отключено';
-                        statusEl.className = 'status offline';
-                        isConnecting = false;
-                        setTimeout(() => { initConnection(); }, 3000);
-                    });
+                    conn.on('close', () => { statusEl.textContent='❌ Отключено'; statusEl.className='status offline'; isConnecting=false; setTimeout(()=>initConnection(),3000); });
                     const call = peer.call(ROOM_ID, localStream);
                     if (call) setupCall(call);
-                    statusEl.textContent = '🟢 Подключено к чату';
-                    statusEl.className = 'status online';
-                    isConnecting = false;
-                    isHost = false;
+                    statusEl.textContent='🟢 Подключено к чату'; statusEl.className='status online'; isConnecting=false; isHost=false;
                 });
-                conn.on('error', (err) => {
-                    if (err.type === 'peer-unavailable') { if (timeoutId) clearTimeout(timeoutId); becomeHost(); }
-                });
+                conn.on('error', (err) => { if (err.type === 'peer-unavailable') { if (timeoutId) clearTimeout(timeoutId); becomeHost(); } });
             }
-
             function becomeHost() {
                 if (peer) { peer.destroy(); peer=null; }
                 peer = new Peer(ROOM_ID, {
-                    host: '0.peerjs.com',
-                    port: 443,
-                    path: '/',
+                    host: '0.peerjs.com', port: 443, path: '/',
                     config: {
                         iceServers: [
                             { urls: 'stun:stun.l.google.com:19302' },
                             { urls: 'stun:stun1.l.google.com:19302' },
                             { urls: 'stun:stun2.l.google.com:19302' },
-                            { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443'], username: 'openrelayproject', credential: 'openrelayproject' },
-                            { urls: ['turn:global.turn.twilio.com:3478?transport=udp', 'turn:global.turn.twilio.com:3478?transport=tcp'], username: '2d0c2eb0d1f5f7b6d9e2b5c8f3a6e7d9', credential: 'q3k9w7f2' }
+                            { urls: ['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'], username:'openrelayproject', credential:'openrelayproject' },
+                            { urls: ['turn:global.turn.twilio.com:3478?transport=udp','turn:global.turn.twilio.com:3478?transport=tcp'], username:'2d0c2eb0d1f5f7b6d9e2b5c8f3a6e7d9', credential:'q3k9w7f2' }
                         ]
                     }
                 });
-                peer.on('open', (id) => {
-                    statusEl.textContent = '🟢 Хост (невидим)';
-                    statusEl.className = 'status connected';
-                    isHost = true;
-                    clients = {};
+                peer.on('open', () => { statusEl.textContent='🟢 Хост (невидим)'; statusEl.className='status connected'; isHost=true; clients={};
                     peer.on('connection', (conn) => handleNewClient(conn));
                     peer.on('call', (call) => {
                         if (currentCall) { call.close(); return; }
-                        if (!localStream) {
-                            startLocalStream().then(() => { if (localStream) { call.answer(localStream); setupCall(call); } });
-                        } else { call.answer(localStream); setupCall(call); }
+                        if (!localStream) { startLocalStream().then(() => { if (localStream) { call.answer(localStream); setupCall(call); } }); }
+                        else { call.answer(localStream); setupCall(call); }
                     });
-                    statusEl.textContent = '🟡 Ожидание участников...';
-                    isConnecting = false;
+                    statusEl.textContent='🟡 Ожидание участников...'; isConnecting=false;
                 });
-                peer.on('error', (err) => {
-                    statusEl.textContent = '❌ Ошибка хоста: ' + err.message;
-                    statusEl.className = 'status offline';
-                    isConnecting = false;
-                    setTimeout(() => { initConnection(); }, 5000);
-                });
+                peer.on('error', (err) => { statusEl.textContent='❌ Ошибка хоста: '+err.message; statusEl.className='status offline'; isConnecting=false; setTimeout(()=>initConnection(),5000); });
             }
         }
 
@@ -575,6 +583,17 @@
                     history.push(msg);
                     localStorage.setItem(key, JSON.stringify(history));
                     broadcastChatMessage(msg.text, msg.sender, msg.time, msg.id, msg.replyTo, msg.reactions, msg.type);
+                    if (data.id) conn.send({ type:'ack', id:data.id });
+                } else if (data.type === 'sticker') {
+                    Object.values(clients).forEach(c => { if (c.open) c.send({ type:'sticker', data:data.data, sender:data.sender, id:data.id }); });
+                    if (data.sender !== myName) {
+                        const msg = { type:'sticker', data:data.data, sender:data.sender, time:new Date().toLocaleTimeString(), id:data.id };
+                        const key = `chatHistory_${myName}`;
+                        let history = JSON.parse(localStorage.getItem(key) || '[]');
+                        history.push(msg);
+                        localStorage.setItem(key, JSON.stringify(history));
+                        displayStickerMessage(data.sender, data.data, false, data.id);
+                    }
                     if (data.id) conn.send({ type:'ack', id:data.id });
                 } else if (data.type === 'file' || data.type === 'voice' || data.type === 'videoMsg') {
                     Object.values(clients).forEach(c => { if (c.open) c.send(data); });
@@ -632,6 +651,9 @@
             if (data.type === 'chat') {
                 addChatMessage(data.text, data.sender, data.time, data.id, data.replyTo, data.reactions, data.type, isMe);
                 if (!isMe) { const msg = { text:data.text, sender:data.sender, time:data.time, id:data.id, replyTo:data.replyTo, reactions:data.reactions, type:data.type }; saveChatMessage(msg); }
+            } else if (data.type === 'sticker') {
+                if (!isMe) { const msg = { type:'sticker', data:data.data, sender:data.sender, time:data.time, id:data.id }; saveChatMessage(msg); }
+                displayStickerMessage(data.sender, data.data, isMe, data.id);
             } else if (data.type === 'file' || data.type === 'voice' || data.type === 'videoMsg') {
                 if (!isMe) { const msg = { type:data.type, sender:data.sender, time:data.time, id:data.id, data:data.data, mime:data.mime, name:data.name }; saveChatMessage(msg); }
                 const blob = base64ToBlob(data.data, data.mime);
@@ -651,11 +673,12 @@
                 else if (p.type === 'file') sendFileInternal(p.data.file, p.data.name, p.data.mime, p.id, true);
                 else if (p.type === 'voice') sendVoiceInternal(p.data.blob, p.id, true);
                 else if (p.type === 'videoMsg') sendVideoMsgInternal(p.data.blob, p.id, true);
+                else if (p.type === 'sticker') sendStickerInternal(p.data.emoji, p.id, true);
             }
         }
 
         // =================================================================
-        // 7. ВИДЕО
+        // 8. ВИДЕО
         // =================================================================
         function setupCall(call) {
             currentCall = call;
@@ -675,7 +698,7 @@
         }
 
         // =================================================================
-        // 8. УПРАВЛЕНИЕ КОМНАТОЙ
+        // 9. УПРАВЛЕНИЕ КОМНАТОЙ (сокращённо)
         // =================================================================
         camBtn.addEventListener('click', ()=>{
             if (!localStream) return;
@@ -756,7 +779,130 @@
         });
 
         // =================================================================
-        // 9. ЧАТ – ОТОБРАЖЕНИЕ
+        // 10. СТИКЕРЫ
+        // =================================================================
+        function renderStickers() {
+            const stickers = getStickers();
+            stickerPanel.innerHTML = '';
+            if (stickers.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-stickers';
+                empty.textContent = 'Загрузи стикеры в настройках';
+                stickerPanel.appendChild(empty);
+                return;
+            }
+            stickers.forEach((base64, index) => {
+                const img = document.createElement('img');
+                img.src = base64;
+                img.alt = `Стикер ${index+1}`;
+                img.title = `Стикер ${index+1}`;
+                img.addEventListener('click', () => sendSticker(base64));
+                stickerPanel.appendChild(img);
+            });
+        }
+
+        function renderStickerPreview() {
+            const stickers = getStickers();
+            stickerPreview.innerHTML = '';
+            stickers.forEach((base64, index) => {
+                const container = document.createElement('div');
+                container.style.position = 'relative';
+                container.style.display = 'inline-block';
+                const img = document.createElement('img');
+                img.src = base64;
+                img.alt = `Стикер ${index+1}`;
+                container.appendChild(img);
+                const remove = document.createElement('span');
+                remove.className = 'remove-sticker';
+                remove.textContent = '×';
+                remove.style.position = 'absolute';
+                remove.style.top = '-6px';
+                remove.style.right = '-6px';
+                remove.style.background = '#f44';
+                remove.style.color = '#fff';
+                remove.style.borderRadius = '50%';
+                remove.style.width = '18px';
+                remove.style.height = '18px';
+                remove.style.fontSize = '12px';
+                remove.style.textAlign = 'center';
+                remove.style.lineHeight = '18px';
+                remove.style.cursor = 'pointer';
+                remove.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const stickers = getStickers();
+                    stickers.splice(index, 1);
+                    saveStickers(stickers);
+                    renderStickerPreview();
+                    renderStickers();
+                });
+                container.appendChild(remove);
+                stickerPreview.appendChild(container);
+            });
+        }
+
+        stickerUpload.addEventListener('change', async (e) => {
+            const files = e.target.files;
+            if (!files.length) return;
+            const stickers = getStickers();
+            for (const file of files) {
+                try {
+                    const blob = await file.arrayBuffer().then(buf => new Blob([buf], { type: file.type }));
+                    const base64 = await blobToBase64(blob);
+                    stickers.push(base64);
+                } catch(err) { console.warn('Ошибка загрузки стикера:', err); }
+            }
+            saveStickers(stickers);
+            renderStickers();
+            renderStickerPreview();
+            stickerUpload.value = '';
+        });
+
+        function sendSticker(base64) {
+            const id = Date.now() + '-' + Math.random().toString(36).substr(2,6);
+            sentIds.add(id);
+            displayStickerMessage(myName, base64, true, id);
+            const msg = { type:'sticker', data:base64, sender:myName, time:new Date().toLocaleTimeString(), id };
+            saveChatMessage(msg);
+            pendingMessages.push({ id, type:'sticker', data:{emoji:base64}, sender:myName, time:new Date().toLocaleTimeString() });
+            sendStickerInternal(base64, id);
+            stickerPanel.classList.remove('active');
+        }
+
+        function sendStickerInternal(base64, id, isRetry=false) {
+            if (isHost) {
+                Object.values(clients).forEach(c => { if (c.open) c.send({ type:'sticker', data:base64, sender:myName, id }); });
+                confirmPending(id);
+            } else if (myDataConnection && myDataConnection.open) {
+                myDataConnection.send({ type:'sticker', data:base64, sender:myName, id });
+            } else { console.warn('Нет соединения, стикер сохранён в pending'); }
+        }
+
+        function displayStickerMessage(sender, base64, isMe, id) {
+            const div = document.createElement('div');
+            div.className = 'msg';
+            if (isMe) div.classList.add('me');
+            else div.classList.add('other');
+            div.dataset.msgId = id;
+            div.dataset.sender = sender;
+            const time = new Date().toLocaleTimeString();
+            const img = document.createElement('img');
+            img.className = 'sticker-img';
+            img.src = base64;
+            div.innerHTML = `<div class="sender">${sender} <span class="time">${time}</span></div>`;
+            div.appendChild(img);
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            addMessageInteractions(div, id, sender);
+        }
+
+        stickerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            stickerPanel.classList.toggle('active');
+        });
+        document.addEventListener('click', () => stickerPanel.classList.remove('active'));
+
+        // =================================================================
+        // 11. ЧАТ – ОТОБРАЖЕНИЕ
         // =================================================================
         function addChatMessage(text, sender, time, id, replyTo, reactions, type, isMe) {
             const div = document.createElement('div');
@@ -858,7 +1004,7 @@
         }
 
         // =================================================================
-        // 10. ОТПРАВКА СООБЩЕНИЙ
+        // 12. ОТПРАВКА СООБЩЕНИЙ (текст, файлы, голос, кружки)
         // =================================================================
         function sendTextMessage() {
             const text = chatInput.value.trim();
@@ -873,7 +1019,6 @@
             chatInput.value = '';
             clearReply();
         }
-
         function sendChatMessageInternal(text, id, isRetry=false, replyToParam=null) {
             const reply = replyToParam || replyTo;
             if (isHost) { broadcastChatMessage(text, myName, null, id, reply, null, 'text'); confirmPending(id); }
@@ -889,7 +1034,6 @@
             for (const file of files) sendFile(file);
             fileInput.value = '';
         });
-
         async function sendFile(file) {
             const id = Date.now() + '-' + Math.random().toString(36).substr(2,6);
             sentIds.add(id);
@@ -903,7 +1047,6 @@
             pendingMessages.push({ id, type:'file', data:{file:blob, name, mime}, sender:myName, time:new Date().toLocaleTimeString() });
             sendFileInternal(blob, name, mime, id);
         }
-
         function sendFileInternal(blob, name, mime, id, isRetry=false) {
             if (isHost) {
                 blobToBase64(blob).then(b64 => { Object.values(clients).forEach(c => { if (c.open) c.send({ type:'file', file:blob, name, mime, sender:myName, id, data:b64 }); }); });
@@ -919,7 +1062,6 @@
             if (isRecordingVoice) { stopVoiceRecording(); return; }
             startVoiceRecording();
         });
-
         async function startVoiceRecording() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
@@ -957,11 +1099,9 @@
                 }
             } catch(e) { alert('Ошибка доступа к микрофону для записи: '+e.message); }
         }
-
         function stopVoiceRecording() {
             if (voiceRecorder && voiceRecorder.state !== 'inactive') { voiceRecorder.stop(); isRecordingVoice = false; }
         }
-
         function sendVoiceInternal(blob, id, isRetry=false) {
             if (isHost) {
                 blobToBase64(blob).then(b64 => { Object.values(clients).forEach(c => { if (c.open) c.send({ type:'voice', file:blob, sender:myName, id, data:b64, mime:'audio/ogg' }); }); });
@@ -976,7 +1116,6 @@
             if (isRecording) return;
             openRecorder();
         });
-
         async function openRecorder() {
             try {
                 const constraints = { video: { facingMode: facingMode, width: { ideal: 320 }, height: { ideal: 320 } }, audio: true };
@@ -995,7 +1134,6 @@
                 }
             } catch(e) { alert('Ошибка доступа к камере: '+e.message); }
         }
-
         recStartBtn.addEventListener('click', () => {
             if (!mediaStream) return;
             if (isRecording) {
@@ -1033,7 +1171,6 @@
                 }
             }, 1000);
         });
-
         flipBtn.addEventListener('click', () => {
             facingMode = (facingMode === 'user') ? 'environment' : 'user';
             if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); openRecorder(); }
@@ -1059,7 +1196,6 @@
             recStartBtn.textContent = '●';
             recStartBtn.classList.remove('recording');
         }
-
         function sendVideoMsgInternal(blob, id, isRetry=false) {
             if (isHost) {
                 blobToBase64(blob).then(b64 => { Object.values(clients).forEach(c => { if (c.open) c.send({ type:'videoMsg', file:blob, sender:myName, id, data:b64, mime:'video/mp4' }); }); });
@@ -1070,7 +1206,7 @@
         }
 
         // =================================================================
-        // 11. РЕАКЦИИ, РЕПЛАЙ, УДАЛЕНИЕ
+        // 13. РЕАКЦИИ, РЕПЛАЙ, УДАЛЕНИЕ
         // =================================================================
         function updateReaction(msgId, emoji, sender) {
             const msgEl = document.querySelector(`[data-msg-id="${msgId}"]`);
@@ -1101,12 +1237,10 @@
                 msgEl.appendChild(newDiv);
             }
         }
-
         function deleteMessageLocally(msgId) {
             const el = document.querySelector(`[data-msg-id="${msgId}"]`);
             if (el) el.remove();
         }
-
         function setReply(id, sender, text) {
             replyTo = { id, sender, text };
             replyIndicator.style.display = 'flex';
@@ -1114,7 +1248,6 @@
         }
         function clearReply() { replyTo = null; replyIndicator.style.display = 'none'; }
         cancelReply.addEventListener('click', clearReply);
-
         function showContextMenu(x, y, msgId, sender) {
             selectedMsgId = msgId;
             contextMenu.style.left = Math.min(x, window.innerWidth - 160) + 'px';
@@ -1124,7 +1257,6 @@
         }
         document.addEventListener('click', () => contextMenu.classList.remove('active'));
         document.addEventListener('contextmenu', (e) => { if (!e.target.closest('.msg')) contextMenu.classList.remove('active'); });
-
         document.querySelectorAll('[data-reaction]').forEach(el => {
             el.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -1140,7 +1272,6 @@
                 }
             });
         });
-
         ctxDelete.addEventListener('click', (e) => {
             e.stopPropagation();
             if (selectedMsgId) {
@@ -1153,7 +1284,6 @@
                 contextMenu.classList.remove('active');
             }
         });
-
         ctxReply.addEventListener('click', (e) => {
             e.stopPropagation();
             if (selectedMsgId) {
@@ -1168,7 +1298,7 @@
         });
 
         // =================================================================
-        // 12. НАВИГАЦИЯ, МАСШТАБ, ТЕМА
+        // 14. НАВИГАЦИЯ, МАСШТАБ, ТЕМА
         // =================================================================
         navItems.forEach(item => {
             item.addEventListener('click', () => {
@@ -1178,7 +1308,6 @@
                 Object.keys(tabs).forEach(key => tabs[key].classList.toggle('active', key === tab));
             });
         });
-
         function applyZoom(value) {
             const percent = parseInt(value);
             mainWrapper.style.transform = `scale(${percent / 100})`;
@@ -1187,7 +1316,6 @@
         }
         zoomSlider.addEventListener('input', (e) => applyZoom(e.target.value));
         zoomDefaultBtn.addEventListener('click', () => { zoomSlider.value = 100; applyZoom(100); });
-
         function applyTheme(light) {
             document.documentElement.classList.toggle('light', light);
             localStorage.setItem('lightTheme', light);
@@ -1195,7 +1323,7 @@
         lightThemeToggle.addEventListener('change', (e) => applyTheme(e.target.checked));
 
         // =================================================================
-        // 13. АУДИО-ПЛЕЕР
+        // 15. АУДИО-ПЛЕЕР
         // =================================================================
         function openAudioPlayer(audioElement) {
             currentAudio = audioElement;
@@ -1215,7 +1343,7 @@
         document.addEventListener('ended', (e) => { if (e.target === currentAudio) playPauseBtn.textContent = '▶'; }, true);
 
         // =================================================================
-        // 14. ИНИЦИАЛИЗАЦИЯ
+        // 16. ИНИЦИАЛИЗАЦИЯ
         // =================================================================
         function init() {
             if (!localStorage.getItem('userChoice')) { showModal(); }
@@ -1226,6 +1354,7 @@
             loadSettings();
             statusEl.textContent = '❌ Не подключено';
             statusEl.className = 'status offline';
+            renderStickerPreview();
         }
 
         chatSendBtn.addEventListener('click', sendTextMessage);
@@ -1247,7 +1376,7 @@
         });
 
         init();
-        console.log('манго арбузник – финальная версия, всё работает!');
+        console.log('манго арбузник – финальная версия со стикерами!');
     </script>
 </body>
 </html>
