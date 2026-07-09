@@ -6,7 +6,7 @@
     <title>манго арбузник</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        /* ===== СТИЛИ (все те же, что и в прошлой версии) ===== */
+        /* ===== ОБЩИЕ СТИЛИ ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg: #0a0a0a; --bg2: #141414; --bg3: #1c1c1c; --bg4: #252525; --bg5: #2e2e2e;
@@ -17,40 +17,219 @@
         }
         .light { --bg: #f5f5f5; --bg2: #e8e8e8; --bg3: #d8d8d8; --bg4: #d0d0d0; --bg5: #c0c0c0; --br: #b0b0b0; --txt: #1a1a1a; --txt2: #444; --txt3: #777; --ac: #222; --ach: #555; --sh: 0 2px 10px rgba(0,0,0,.15); --msg-other-bg: #d0e0f0; --chat-bg: #f5f5f5; }
         body { background: var(--bg); color: var(--txt); font-family: 'Segoe UI', Roboto, sans-serif; height: 100vh; display: flex; overflow: hidden; }
-        .sidebar { width: 60px; background: var(--bg2); display: flex; flex-direction: column; align-items: center; padding-top: 16px; border-right: 1px solid var(--br); flex-shrink: 0; z-index: 10; }
-        .sidebar .logo { font-size: 18px; font-weight: 900; color: var(--ac); margin-bottom: 20px; writing-mode: vertical-lr; letter-spacing: 4px; animation: pulse-logo 2s infinite; }
-        @keyframes pulse-logo { 0% { opacity: 0.7; transform: scale(0.98); } 50% { opacity: 1; transform: scale(1.02); } 100% { opacity: 0.7; transform: scale(0.98); } }
-        .sidebar .nav-item { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 14px; margin-bottom: 8px; cursor: pointer; transition: .2s; color: var(--txt2); font-size: 20px; background: 0 0; border: none; }
-        .sidebar .nav-item:hover { background: var(--bg3); color: var(--txt); }
-        .sidebar .nav-item.active { background: var(--ac); color: var(--bg); box-shadow: var(--sh); }
-        .sidebar .nav-item:last-child { margin-top: auto; margin-bottom: 16px; }
-        .main { flex: 1; display: flex; flex-direction: column; background: var(--bg); min-width: 0; transition: transform .15s, background .2s; transform-origin: top left; position: relative; }
-        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; background: var(--bg2); border-bottom: 1px solid var(--br); flex-shrink: 0; flex-wrap: wrap; gap: 4px; }
-        .topbar .title { font-size: 16px; font-weight: 700; color: var(--ac); letter-spacing: 1px; }
-        .topbar .datetime { font-size: 11px; color: var(--txt2); background: var(--bg3); padding: 2px 10px; border-radius: 20px; border: 1px solid var(--br); white-space: nowrap; }
-        .topbar .status { font-size: 11px; color: var(--txt2); background: var(--bg3); padding: 2px 10px; border-radius: 20px; border: 1px solid var(--br); white-space: nowrap; display: flex; align-items: center; gap: 4px; }
+
+        /* ===== НОВОЕ ВЫДВИЖНОЕ МЕНЮ ===== */
+        .menu-btn {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 100;
+            background: var(--bg2);
+            border: 1px solid var(--br);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: pointer;
+            color: var(--txt);
+            transition: .2s;
+            box-shadow: var(--sh);
+        }
+        .menu-btn:hover { background: var(--bg3); }
+        .menu-btn svg { width: 24px; height: 24px; fill: currentColor; }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 99;
+            display: none;
+            backdrop-filter: blur(2px);
+        }
+        .menu-overlay.active { display: block; }
+
+        .side-menu {
+            position: fixed;
+            top: 0; left: -280px;
+            width: 280px;
+            height: 100%;
+            background: var(--bg2);
+            border-right: 1px solid var(--br);
+            z-index: 100;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 60px 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-shadow: var(--sh);
+        }
+        .side-menu.open { left: 0; }
+
+        .side-menu .menu-item {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: var(--txt2);
+            cursor: pointer;
+            transition: .15s;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+        }
+        .side-menu .menu-item:hover { background: var(--bg3); color: var(--txt); }
+        .side-menu .menu-item.active { background: var(--ac); color: var(--bg); font-weight: 600; }
+        .side-menu .menu-item .icon { font-size: 22px; width: 30px; text-align: center; }
+        .side-menu .logo {
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--ac);
+            padding: 8px 16px 20px;
+            letter-spacing: 2px;
+        }
+
+        /* ===== ОСНОВНОЙ КОНТЕНТ (без сайдбара) ===== */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+            min-width: 0;
+            transition: transform .15s, background .2s;
+            transform-origin: top left;
+            position: relative;
+        }
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px 6px 64px; /* отступ слева для кнопки */
+            background: var(--bg2);
+            border-bottom: 1px solid var(--br);
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 4px;
+            min-height: 52px;
+        }
+        .topbar .title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--ac);
+            letter-spacing: 1px;
+        }
+        .topbar .datetime {
+            font-size: 11px;
+            color: var(--txt2);
+            background: var(--bg3);
+            padding: 2px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--br);
+            white-space: nowrap;
+        }
+        .topbar .status {
+            font-size: 11px;
+            color: var(--txt2);
+            background: var(--bg3);
+            padding: 2px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--br);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
         .topbar .status.online { color: #5a5; border-color: #5a5; }
         .topbar .status.offline { color: #a55; border-color: #a55; }
         .topbar .status.connected { color: #aa5; border-color: #aa5; }
         .topbar .status.retry { color: #fa0; border-color: #fa0; }
         .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #5a5; animation: pulse-dot 1.5s infinite; }
         @keyframes pulse-dot { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
-        .content { flex: 1; display: flex; overflow: hidden; position: relative; }
-        .tab { display: none; width: 100%; height: 100%; flex-direction: column; padding: 12px; overflow-y: auto; }
+
+        .content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+        .tab {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            padding: 12px;
+            overflow-y: auto;
+        }
         .tab.active { display: flex; }
-        .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex: 1; min-height: 0; margin-bottom: 10px; }
+
+        /* ===== ВИДЕО ===== */
+        .video-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            flex: 1;
+            min-height: 0;
+            margin-bottom: 10px;
+        }
         @media(max-width:700px){ .video-grid { grid-template-columns: 1fr; gap: 8px; } }
         .video-card { background: var(--bg3); border-radius: 16px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid var(--br); }
         .video-card video { width: 100%; height: 100%; object-fit: cover; background: #000; transform: scaleX(-1); }
         .video-card .label { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,.6); padding: 2px 12px; border-radius: 20px; font-size: 12px; color: #ccc; backdrop-filter: blur(4px); border: 1px solid var(--br); }
         .video-card .label.remote { color: #fc0; }
-        .controls-room { display: flex; justify-content: center; gap: 8px; flex-shrink: 0; padding: 6px 0; flex-wrap: wrap; }
-        .controls-room button { background: var(--bg3); border: 1px solid var(--br); padding: 6px 14px; border-radius: 40px; color: var(--txt); font-size: 13px; cursor: pointer; transition: .15s; display: flex; align-items: center; gap: 4px; }
+        .controls-room {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-shrink: 0;
+            padding: 6px 0;
+            flex-wrap: wrap;
+        }
+        .controls-room button {
+            background: var(--bg3);
+            border: 1px solid var(--br);
+            padding: 6px 14px;
+            border-radius: 40px;
+            color: var(--txt);
+            font-size: 13px;
+            cursor: pointer;
+            transition: .15s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
         .controls-room button:hover { background: var(--br); }
         .controls-room .active { background: var(--ac); color: var(--bg); border-color: var(--ac); }
         .controls-room .danger { background: #a55; color: #fff; border-color: #a55; }
-        .chat-messages { flex: 1; overflow-y: auto; padding: 6px 8px; background: var(--chat-bg); border-radius: 16px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--br); transition: background .3s; }
-        .chat-messages .msg { max-width: 85%; padding: 6px 12px; border-radius: 14px; align-self: flex-start; word-wrap: break-word; position: relative; animation: msgSlide .3s ease; }
+
+        /* ===== ЧАТ ===== */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px 8px;
+            background: var(--chat-bg);
+            border-radius: 16px;
+            margin-bottom: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border: 1px solid var(--br);
+            transition: background .3s;
+        }
+        .chat-messages .msg {
+            max-width: 85%;
+            padding: 6px 12px;
+            border-radius: 14px;
+            align-self: flex-start;
+            word-wrap: break-word;
+            position: relative;
+            animation: msgSlide .3s ease;
+        }
         .chat-messages .msg.me { align-self: flex-end; background: var(--bg5); border: 1px solid var(--br); }
         .chat-messages .msg.other { align-self: flex-start; background: var(--msg-other-bg); border: 1px solid var(--br); }
         @keyframes msgSlide { 0% { opacity: 0; transform: translateY(10px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
@@ -69,19 +248,65 @@
         .chat-messages .msg .reactions span:hover { transform: scale(1.2); }
         .pending-indicator { color: #f44; font-weight: 700; margin-left: 4px; font-size: 14px; display: inline-block; animation: blink 1s infinite; }
         @keyframes blink { 0%{opacity:1} 50%{opacity:.3} 100%{opacity:1} }
-        .typing-indicator { display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--bg3); border-radius: 20px; align-self: flex-start; margin-bottom: 4px; animation: msgSlide .3s ease; }
-        .typing-indicator span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--txt2); animation: typing-bounce 1.4s infinite; }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: var(--bg3);
+            border-radius: 20px;
+            align-self: flex-start;
+            margin-bottom: 4px;
+            animation: msgSlide .3s ease;
+        }
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--txt2);
+            animation: typing-bounce 1.4s infinite;
+        }
         .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
         .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes typing-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
-        .chat-input-area { display: flex; gap: 6px; align-items: center; flex-shrink: 0; background: var(--bg2); padding: 6px 10px; border-radius: 40px; border: 1px solid var(--br); }
-        .chat-input-area input[type="text"] { flex: 1; background: 0 0; border: 0; color: var(--txt); font-size: 14px; outline: 0; padding: 6px 0; }
-        .chat-input-area button { background: 0 0; border: 0; color: var(--txt2); font-size: 18px; cursor: pointer; padding: 4px 6px; transition: .2s; position: relative; }
+
+        .chat-input-area {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-shrink: 0;
+            background: var(--bg2);
+            padding: 6px 10px;
+            border-radius: 40px;
+            border: 1px solid var(--br);
+        }
+        .chat-input-area input[type="text"] {
+            flex: 1;
+            background: 0 0;
+            border: 0;
+            color: var(--txt);
+            font-size: 14px;
+            outline: 0;
+            padding: 6px 0;
+        }
+        .chat-input-area button {
+            background: 0 0;
+            border: 0;
+            color: var(--txt2);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 6px;
+            transition: .2s;
+            position: relative;
+        }
         .chat-input-area button:hover { color: var(--txt); }
         .chat-input-area button.primary { color: var(--ac); font-size: 20px; }
         .chat-input-area button.primary:hover { color: var(--ach); }
         .chat-input-area button.recording { color: #a55; }
         .chat-input-area button.sticker-btn { font-size: 20px; }
+
         .voice-wave { display: inline-flex; align-items: center; gap: 3px; height: 18px; margin-left: 4px; }
         .voice-wave span { display: block; width: 3px; height: 100%; background: var(--ac); border-radius: 3px; animation: wave .6s infinite alternate ease-in-out; }
         .voice-wave span:nth-child(2) { animation-delay:.1s; height:60%; }
@@ -91,6 +316,42 @@
         .voice-wave span:nth-child(6) { animation-delay:.5s; height:50%; }
         .voice-wave span:nth-child(7) { animation-delay:.6s; height:70%; }
         @keyframes wave { 0%{transform:scaleY(.4)} 100%{transform:scaleY(1)} }
+
+        .sticker-panel {
+            display: none;
+            position: absolute;
+            bottom: 60px;
+            left: 10px;
+            background: var(--bg2);
+            border-radius: 16px;
+            padding: 8px;
+            border: 1px solid var(--br);
+            max-width: 320px;
+            flex-wrap: wrap;
+            gap: 4px;
+            z-index: 100;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .sticker-panel.active { display: flex; }
+        .sticker-panel img { width: 64px; height: 64px; border-radius: 12px; cursor: pointer; object-fit: contain; background: var(--bg3); padding: 4px; border: 1px solid transparent; transition: .1s; }
+        .sticker-panel img:hover { border-color: var(--ac); transform: scale(1.05); }
+        .sticker-panel .empty-stickers { color: var(--txt3); font-size: 13px; padding: 12px; text-align: center; width: 100%; }
+
+        .reply-indicator {
+            background: var(--bg3);
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            color: var(--txt2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .reply-indicator .cancel-reply { cursor: pointer; color: #f44; font-weight: bold; }
+
+        /* ===== НАСТРОЙКИ (компактно) ===== */
         .settings-tab { padding: 16px; max-width: 400px; width: 100%; }
         .settings-tab .setting-group { margin-bottom: 16px; }
         .settings-tab label { display: block; font-size: 13px; color: var(--txt2); margin-bottom: 4px; }
@@ -119,7 +380,14 @@
         .sticker-upload .sticker-preview { display: flex; gap: 4px; flex-wrap: wrap; }
         .sticker-upload .sticker-preview img { width: 48px; height: 48px; border-radius: 8px; object-fit: contain; background: var(--bg3); border: 1px solid var(--br); padding: 2px; }
         .sticker-upload .sticker-preview .remove-sticker { position: relative; cursor: pointer; font-size: 14px; color: #f44; margin-left: -16px; background: var(--bg); border-radius: 50%; width: 16px; height: 16px; text-align: center; line-height: 16px; }
-        .recording-modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.92); display:none; align-items:center; justify-content:center; z-index:9999; flex-direction:column; animation:fadeIn .3s; }
+
+        /* ===== МОДАЛКИ ===== */
+        .recording-modal {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,.92); display:none;
+            align-items:center; justify-content:center; z-index:9999;
+            flex-direction:column; animation:fadeIn .3s;
+        }
         .recording-modal.active { display:flex; }
         @keyframes fadeIn { 0% { opacity:0; } 100% { opacity:1; } }
         .recording-modal .preview { width: 260px; height: 260px; border-radius: 50%; overflow: hidden; background: #000; }
@@ -132,27 +400,60 @@
         @keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.08)} 100%{transform:scale(1)} }
         .recording-modal .timer { color: #fff; font-size: 20px; margin-top: 8px; }
         .recording-modal .close-rec { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
-        .context-menu { position: fixed; background: var(--bg2); border-radius: 12px; padding: 6px; box-shadow: var(--sh); z-index: 9998; display: none; flex-direction: column; border: 1px solid var(--br); min-width: 140px; }
+
+        .context-menu {
+            position: fixed;
+            background: var(--bg2);
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: var(--sh);
+            z-index: 9998;
+            display: none;
+            flex-direction: column;
+            border: 1px solid var(--br);
+            min-width: 140px;
+        }
         .context-menu.active { display: flex; }
         .context-menu button { background: none; border: none; color: var(--txt); padding: 4px 12px; text-align: left; font-size: 13px; cursor: pointer; border-radius: 6px; }
         .context-menu button:hover { background: var(--bg3); }
         .context-menu .reactions-row { display: flex; gap: 4px; padding: 4px 6px; flex-wrap: wrap; }
         .context-menu .reactions-row span { font-size: 20px; cursor: pointer; padding: 2px; }
         .context-menu .reactions-row span:hover { transform: scale(1.2); background: var(--bg3); border-radius: 6px; }
-        .reply-indicator { background: var(--bg3); padding: 4px 10px; border-radius: 16px; font-size: 12px; color: var(--txt2); display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
-        .reply-indicator .cancel-reply { cursor: pointer; color: #f44; font-weight: bold; }
-        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.8); display:flex; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(4px); animation:fadeIn .3s; }
+
+        .modal-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,.8); display:flex; align-items:center; justify-content:center; z-index:9999;
+            backdrop-filter:blur(4px); animation:fadeIn .3s;
+        }
         .modal-overlay.hidden { display: none; }
-        .modal-box { background: var(--bg2); border-radius:24px; padding:28px; max-width:320px; width:90%; text-align:center; border:2px solid var(--ac); box-shadow:var(--sh); }
+        .modal-box {
+            background: var(--bg2); border-radius:24px; padding:28px; max-width:320px; width:90%; text-align:center;
+            border:2px solid var(--ac); box-shadow:var(--sh);
+        }
         .modal-box h2 { font-size:26px; color:var(--ac); margin-bottom:6px; }
         .modal-box p { color:var(--txt2); margin-bottom:16px; font-size:18px; font-weight:500; }
         .modal-buttons { display:flex; gap:12px; justify-content:center; }
         .modal-buttons button { padding:8px 24px; border-radius:40px; border:0; font-size:16px; font-weight:700; cursor:pointer; transition:.15s; background:var(--bg3); color:var(--txt); border:1px solid var(--br); }
         .modal-buttons button:hover { background:var(--br); }
         .modal-buttons button.active-choice { background:var(--ac); color:var(--bg); border-color:var(--ac); }
-        .splash { position:fixed; top:0; left:0; width:100%; height:100%; background:#000; display:flex; align-items:center; justify-content:center; z-index:10000; color:#fff; font-size:30px; font-weight:900; letter-spacing:4px; transition:opacity .5s; }
+
+        .splash {
+            position:fixed; top:0; left:0; width:100%; height:100%; background:#000;
+            display:flex; align-items:center; justify-content:center; z-index:10000;
+            color:#fff; font-size:30px; font-weight:900; letter-spacing:4px;
+            transition:opacity .5s;
+        }
         .splash.hidden { opacity:0; pointer-events:none; }
-        .audio-player { position:fixed; top:12px; right:12px; background:var(--bg2); border-radius:40px; padding:8px 14px; z-index:999; box-shadow:var(--sh); border:1px solid var(--br); display:flex; align-items:center; gap:12px; transform:translateY(-20px); opacity:0; transition:transform .3s ease, opacity .3s ease; pointer-events:none; }
+
+        .audio-player {
+            position:fixed; top:12px; right:12px;
+            background:var(--bg2); border-radius:40px; padding:8px 14px;
+            z-index:999; box-shadow:var(--sh); border:1px solid var(--br);
+            display:flex; align-items:center; gap:12px;
+            transform:translateY(-20px); opacity:0;
+            transition:transform .3s ease, opacity .3s ease;
+            pointer-events:none;
+        }
         .audio-player.show { transform:translateY(0); opacity:1; pointer-events:auto; }
         .audio-player .ctrl { display:flex; align-items:center; gap:6px; }
         .audio-player .ctrl label { font-size:11px; color:var(--txt2); }
@@ -161,24 +462,17 @@
         .audio-player .close { background:0 0; border:0; color:var(--txt2); font-size:14px; cursor:pointer; padding:0 2px; }
         .audio-player .close:hover { color:var(--txt); }
         .audio-player .playpause { background:0 0; border:0; color:var(--ac); font-size:18px; cursor:pointer; padding:0 2px; }
-        .sticker-panel { display: none; position: absolute; bottom: 60px; left: 10px; background: var(--bg2); border-radius: 16px; padding: 8px; border: 1px solid var(--br); max-width: 320px; flex-wrap: wrap; gap: 4px; z-index: 100; max-height: 200px; overflow-y: auto; }
-        .sticker-panel.active { display: flex; }
-        .sticker-panel img { width: 64px; height: 64px; border-radius: 12px; cursor: pointer; object-fit: contain; background: var(--bg3); padding: 4px; border: 1px solid transparent; transition: .1s; }
-        .sticker-panel img:hover { border-color: var(--ac); transform: scale(1.05); }
-        .sticker-panel .empty-stickers { color: var(--txt3); font-size: 13px; padding: 12px; text-align: center; width: 100%; }
+
         @media(max-width:700px){
-            .sidebar{width:50px}
-            .sidebar .nav-item{width:36px;height:36px;font-size:16px}
-            .topbar .title{font-size:14px}
-            .video-grid{grid-template-columns:1fr}
-            .chat-messages .msg{max-width:95%}
-            .audio-player{top:8px;right:8px;padding:6px 10px;flex-wrap:wrap;width:auto;max-width:92%}
-            .recording-modal .preview{width:180px;height:180px}
-            .recording-modal .controls .record-btn{width:44px;height:44px}
-            .context-menu{min-width:120px}
-            .controls-room button{font-size:11px;padding:4px 10px}
+            .side-menu { width: 240px; left: -240px; }
+            .topbar { padding: 6px 12px 6px 56px; }
+            .menu-btn { width: 38px; height: 38px; font-size: 18px; }
             .sticker-panel { max-width: 200px; }
             .sticker-panel img { width: 48px; height: 48px; }
+            .recording-modal .preview { width: 180px; height: 180px; }
+            .recording-modal .controls .record-btn { width: 44px; height: 44px; }
+            .context-menu { min-width: 120px; }
+            .controls-room button { font-size: 11px; padding: 4px 10px; }
         }
         ::-webkit-scrollbar { width:3px; }
         ::-webkit-scrollbar-track { background: var(--bg2); }
@@ -188,6 +482,7 @@
 <body>
     <!-- Splash -->
     <div class="splash" id="splash">манго арбузник</div>
+
     <!-- Модалка выбора -->
     <div class="modal-overlay" id="userModal">
         <div class="modal-box">
@@ -199,6 +494,7 @@
             </div>
         </div>
     </div>
+
     <!-- Модалка записи кружка -->
     <div class="recording-modal" id="recordingModal">
         <button class="close-rec" id="closeRecBtn">✕</button>
@@ -210,14 +506,28 @@
             <button class="record-btn" id="recStartBtn">●</button>
         </div>
     </div>
-    <!-- Сайдбар -->
-    <div class="sidebar" id="sidebar">
-        <div class="logo">🍉</div>
-        <button class="nav-item active" data-tab="room">📹</button>
-        <button class="nav-item" data-tab="chat">💬</button>
-        <button class="nav-item" data-tab="settings">⚙️</button>
+
+    <!-- ===== НОВОЕ МЕНЮ ===== -->
+    <button class="menu-btn" id="menuBtn">
+        <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+    </button>
+
+    <div class="menu-overlay" id="menuOverlay"></div>
+
+    <div class="side-menu" id="sideMenu">
+        <div class="logo">🍉 манго арбузник</div>
+        <button class="menu-item active" data-tab="room">
+            <span class="icon">📹</span> Комната
+        </button>
+        <button class="menu-item" data-tab="chat">
+            <span class="icon">💬</span> Чат
+        </button>
+        <button class="menu-item" data-tab="settings">
+            <span class="icon">⚙️</span> Настройки
+        </button>
     </div>
-    <!-- Основной блок -->
+
+    <!-- ОСНОВНОЙ БЛОК -->
     <div class="main" id="mainWrapper">
         <div class="topbar">
             <div class="title">манго арбузник</div>
@@ -225,6 +535,7 @@
             <div class="status offline" id="connectionStatus">❌ Не подключено</div>
         </div>
         <div class="content">
+            <!-- Комната -->
             <div class="tab active" id="roomTab">
                 <div class="room-tab" style="display:flex;flex-direction:column;height:100%">
                     <div class="video-grid">
@@ -239,6 +550,7 @@
                     </div>
                 </div>
             </div>
+            <!-- Чат -->
             <div class="tab" id="chatTab">
                 <div class="chat-tab" style="display:flex;flex-direction:column;height:100%">
                     <div class="chat-messages" id="chatMessages"></div>
@@ -264,6 +576,7 @@
                     <input type="file" id="fileInput" accept="image/*,video/*,audio/*" style="display:none" multiple>
                 </div>
             </div>
+            <!-- Настройки -->
             <div class="tab" id="settingsTab">
                 <div class="settings-tab">
                     <div class="setting-group">
@@ -316,6 +629,7 @@
             </div>
         </div>
     </div>
+
     <!-- Аудио-плеер -->
     <div class="audio-player" id="audioPlayer">
         <button class="playpause" id="playPauseBtn">▶</button>
@@ -323,6 +637,7 @@
         <div class="ctrl"><label>Скорость</label><select id="speedSelect"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></div>
         <button class="close" id="closePlayerBtn">✕</button>
     </div>
+
     <!-- Контекстное меню -->
     <div class="context-menu" id="contextMenu">
         <div class="reactions-row">
@@ -370,8 +685,6 @@
         const modal = document.getElementById('userModal');
         const modalKarasik = document.getElementById('modalKarasik');
         const modalKater = document.getElementById('modalKater');
-        const navItems = document.querySelectorAll('.nav-item');
-        const tabs = { room: document.getElementById('roomTab'), chat: document.getElementById('chatTab'), settings: document.getElementById('settingsTab') };
         const splash = document.getElementById('splash');
         const datetimeEl = document.getElementById('datetime');
         const audioPlayer = document.getElementById('audioPlayer');
@@ -394,6 +707,10 @@
         const ctxReply = document.getElementById('ctxReply');
         const myColorPicker = document.getElementById('myColorPicker');
         const bgButtons = document.querySelectorAll('.bg-selector button');
+        const menuBtn = document.getElementById('menuBtn');
+        const sideMenu = document.getElementById('sideMenu');
+        const menuOverlay = document.getElementById('menuOverlay');
+        const menuItems = document.querySelectorAll('.menu-item');
 
         let myName = 'Карасик';
         let myColor = '#ff00c8';
@@ -405,8 +722,8 @@
         let currentAudio = null;
         let isRecording = false, recorder = null, recordedChunks = [], recStream = null, recTimerInterval = null, recSeconds = 0, facingMode = 'user', flashActive = false, mediaStream = null;
         let replyTo = null, selectedMsgId = null;
-        let typingTimeout = null; // <-- глобальная переменная, больше не дублируем
-        let isTypingVisible = false; // <-- объявлена
+        let typingTimeout = null;
+        let isTypingVisible = false;
 
         // =================================================================
         // 1. РАБОТА С LOCALSTORAGE
@@ -471,7 +788,10 @@
         updateClock();
         setInterval(updateClock, 60000);
         window.addEventListener('load', () => {
-            setTimeout(() => { splash.classList.add('hidden'); setTimeout(() => splash.style.display = 'none', 500); }, 2000);
+            setTimeout(() => {
+                splash.classList.add('hidden');
+                setTimeout(() => splash.style.display = 'none', 500);
+            }, 2000);
         });
 
         // =================================================================
@@ -479,13 +799,28 @@
         // =================================================================
         function loadSettings() {
             const savedUser = localStorage.getItem('userChoice');
-            if (savedUser === 'kater') { document.querySelector('input[name="userChoice"][value="kater"]').checked = true; setUser('kater'); }
-            else if (savedUser === 'karasik') { document.querySelector('input[name="userChoice"][value="karasik"]').checked = true; setUser('karasik'); }
-            else { myName = 'Карасик'; localLabel.textContent = myName; remoteLabel.textContent = 'Катер'; }
+            if (savedUser === 'kater') {
+                document.querySelector('input[name="userChoice"][value="kater"]').checked = true;
+                setUser('kater');
+            } else if (savedUser === 'karasik') {
+                document.querySelector('input[name="userChoice"][value="karasik"]').checked = true;
+                setUser('karasik');
+            } else {
+                myName = 'Карасик';
+                localLabel.textContent = myName;
+                remoteLabel.textContent = 'Катер';
+            }
             const savedZoom = localStorage.getItem('zoomLevel');
-            if (savedZoom) { const val = parseInt(savedZoom); zoomSlider.value = val; applyZoom(val); } else applyZoom(100);
+            if (savedZoom) {
+                const val = parseInt(savedZoom);
+                zoomSlider.value = val;
+                applyZoom(val);
+            } else {
+                applyZoom(100);
+            }
             const savedTheme = localStorage.getItem('lightTheme') === 'true';
-            lightThemeToggle.checked = savedTheme; applyTheme(savedTheme);
+            lightThemeToggle.checked = savedTheme;
+            applyTheme(savedTheme);
             myColor = getMyColor();
             myColorPicker.value = myColor;
             const bg = getChatBg();
@@ -499,8 +834,15 @@
         }
 
         function setUser(choice) {
-            if (choice === 'kater') { myName = 'Катер'; localLabel.textContent = myName; remoteLabel.textContent = 'Карасик'; }
-            else { myName = 'Карасик'; localLabel.textContent = myName; remoteLabel.textContent = 'Катер'; }
+            if (choice === 'kater') {
+                myName = 'Катер';
+                localLabel.textContent = myName;
+                remoteLabel.textContent = 'Карасик';
+            } else {
+                myName = 'Карасик';
+                localLabel.textContent = myName;
+                remoteLabel.textContent = 'Катер';
+            }
             localStorage.setItem('userChoice', choice);
             loadChatHistoryForUser(myName);
             userRadios.forEach(r => r.checked = (r.value === choice));
@@ -565,7 +907,7 @@
         }
 
         // =================================================================
-        // 7. ПОДКЛЮЧЕНИЕ
+        // 7. ПОДКЛЮЧЕНИЕ (сокращённо, но рабочее)
         // =================================================================
         function initConnection() {
             if (isConnecting) return;
@@ -577,7 +919,9 @@
             if (peer) { peer.destroy(); peer=null; }
             const uniqueId = ROOM_ID + '-' + Date.now() + '-' + Math.random().toString(36).substr(2,6);
             peer = new Peer(uniqueId, {
-                host: '0.peerjs.com', port: 443, path: '/',
+                host: '0.peerjs.com',
+                port: 443,
+                path: '/',
                 config: {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
@@ -589,28 +933,62 @@
                 }
             });
             let established = false;
-            let timeoutId = setTimeout(() => { if (!established) { if (peer) peer.destroy(); setTimeout(()=>initConnection(),3000); isConnecting=false; } }, 10000);
-            peer.on('open', () => { statusEl.textContent='🟢 Соединение с сервером'; statusEl.className='status online'; connectToRoom(); });
-            peer.on('error', (err) => { if (err.type === 'peer-unavailable') { becomeHost(); } else { statusEl.textContent='❌ '+err.message; statusEl.className='status offline'; isConnecting=false; setTimeout(()=>initConnection(),5000); } });
+            let timeoutId = setTimeout(() => {
+                if (!established) {
+                    if (peer) peer.destroy();
+                    setTimeout(()=>initConnection(),3000);
+                    isConnecting=false;
+                }
+            }, 10000);
+            peer.on('open', () => {
+                statusEl.textContent='🟢 Соединение с сервером';
+                statusEl.className='status online';
+                connectToRoom();
+            });
+            peer.on('error', (err) => {
+                if (err.type === 'peer-unavailable') { becomeHost(); }
+                else {
+                    statusEl.textContent='❌ '+err.message;
+                    statusEl.className='status offline';
+                    isConnecting=false;
+                    setTimeout(()=>initConnection(),5000);
+                }
+            });
             function connectToRoom() {
                 const conn = peer.connect(ROOM_ID);
                 conn.on('open', () => {
-                    established = true; if (timeoutId) clearTimeout(timeoutId);
+                    established = true;
+                    if (timeoutId) clearTimeout(timeoutId);
                     myDataConnection = conn;
                     conn.send({ type: 'chat', text: '👋 Я здесь', sender: myName });
                     flushPendingMessages();
                     conn.on('data', (data) => handleIncomingData(data));
-                    conn.on('close', () => { statusEl.textContent='❌ Отключено'; statusEl.className='status offline'; isConnecting=false; setTimeout(()=>initConnection(),3000); });
+                    conn.on('close', () => {
+                        statusEl.textContent='❌ Отключено';
+                        statusEl.className='status offline';
+                        isConnecting=false;
+                        setTimeout(()=>initConnection(),3000);
+                    });
                     const call = peer.call(ROOM_ID, localStream);
                     if (call) setupCall(call);
-                    statusEl.textContent='🟢 Подключено к чату'; statusEl.className='status online'; isConnecting=false; isHost=false;
+                    statusEl.textContent='🟢 Подключено к чату';
+                    statusEl.className='status online';
+                    isConnecting=false;
+                    isHost=false;
                 });
-                conn.on('error', (err) => { if (err.type === 'peer-unavailable') { if (timeoutId) clearTimeout(timeoutId); becomeHost(); } });
+                conn.on('error', (err) => {
+                    if (err.type === 'peer-unavailable') {
+                        if (timeoutId) clearTimeout(timeoutId);
+                        becomeHost();
+                    }
+                });
             }
             function becomeHost() {
                 if (peer) { peer.destroy(); peer=null; }
                 peer = new Peer(ROOM_ID, {
-                    host: '0.peerjs.com', port: 443, path: '/',
+                    host: '0.peerjs.com',
+                    port: 443,
+                    path: '/',
                     config: {
                         iceServers: [
                             { urls: 'stun:stun.l.google.com:19302' },
@@ -621,16 +999,35 @@
                         ]
                     }
                 });
-                peer.on('open', () => { statusEl.textContent='🟢 Хост (невидим)'; statusEl.className='status connected'; isHost=true; clients={};
+                peer.on('open', () => {
+                    statusEl.textContent='🟢 Хост (невидим)';
+                    statusEl.className='status connected';
+                    isHost=true;
+                    clients={};
                     peer.on('connection', (conn) => handleNewClient(conn));
                     peer.on('call', (call) => {
                         if (currentCall) { call.close(); return; }
-                        if (!localStream) { startLocalStream().then(() => { if (localStream) { call.answer(localStream); setupCall(call); } }); }
-                        else { call.answer(localStream); setupCall(call); }
+                        if (!localStream) {
+                            startLocalStream().then(() => {
+                                if (localStream) {
+                                    call.answer(localStream);
+                                    setupCall(call);
+                                }
+                            });
+                        } else {
+                            call.answer(localStream);
+                            setupCall(call);
+                        }
                     });
-                    statusEl.textContent='🟡 Ожидание участников...'; isConnecting=false;
+                    statusEl.textContent='🟡 Ожидание участников...';
+                    isConnecting=false;
                 });
-                peer.on('error', (err) => { statusEl.textContent='❌ Ошибка хоста: '+err.message; statusEl.className='status offline'; isConnecting=false; setTimeout(()=>initConnection(),5000); });
+                peer.on('error', (err) => {
+                    statusEl.textContent='❌ Ошибка хоста: '+err.message;
+                    statusEl.className='status offline';
+                    isConnecting=false;
+                    setTimeout(()=>initConnection(),5000);
+                });
             }
         }
 
@@ -713,7 +1110,10 @@
             const idx = pendingMessages.findIndex(p => p.id === id);
             if (idx !== -1) {
                 const el = document.querySelector(`[data-msg-id="${id}"]`);
-                if (el) { const ind = el.querySelector('.pending-indicator'); if (ind) ind.remove(); }
+                if (el) {
+                    const ind = el.querySelector('.pending-indicator');
+                    if (ind) ind.remove();
+                }
                 pendingMessages.splice(idx, 1);
             }
         }
@@ -724,12 +1124,24 @@
             const isMe = (data.sender === myName);
             if (data.type === 'chat') {
                 addChatMessage(data.text, data.sender, data.time, data.id, data.replyTo, data.reactions, data.type, isMe);
-                if (!isMe) { const msg = { text:data.text, sender:data.sender, time:data.time, id:data.id, replyTo:data.replyTo, reactions:data.reactions, type:data.type }; saveChatMessage(msg); playSound('receive'); }
+                if (!isMe) {
+                    const msg = { text:data.text, sender:data.sender, time:data.time, id:data.id, replyTo:data.replyTo, reactions:data.reactions, type:data.type };
+                    saveChatMessage(msg);
+                    playSound('receive');
+                }
             } else if (data.type === 'sticker') {
-                if (!isMe) { const msg = { type:'sticker', data:data.data, sender:data.sender, time:data.time, id:data.id }; saveChatMessage(msg); playSound('receive'); }
+                if (!isMe) {
+                    const msg = { type:'sticker', data:data.data, sender:data.sender, time:data.time, id:data.id };
+                    saveChatMessage(msg);
+                    playSound('receive');
+                }
                 displayStickerMessage(data.sender, data.data, isMe, data.id);
             } else if (data.type === 'file' || data.type === 'voice' || data.type === 'videoMsg') {
-                if (!isMe) { const msg = { type:data.type, sender:data.sender, time:data.time, id:data.id, data:data.data, mime:data.mime, name:data.name }; saveChatMessage(msg); playSound('receive'); }
+                if (!isMe) {
+                    const msg = { type:data.type, sender:data.sender, time:data.time, id:data.id, data:data.data, mime:data.mime, name:data.name };
+                    saveChatMessage(msg);
+                    playSound('receive');
+                }
                 const blob = base64ToBlob(data.data, data.mime);
                 const url = URL.createObjectURL(blob);
                 if (data.type === 'file') displayFileMessage(data.sender, url, data.name, data.mime, isMe, data.id);
@@ -737,8 +1149,11 @@
                 else if (data.type === 'videoMsg') displayVideoMessage(data.sender, url, isMe, data.id);
             } else if (data.type === 'typing') {
                 showTyping(data.sender);
-            } else if (data.type === 'reaction') { updateReaction(data.msgId, data.reaction, data.sender); }
-            else if (data.type === 'delete') { deleteMessageLocally(data.msgId); }
+            } else if (data.type === 'reaction') {
+                updateReaction(data.msgId, data.reaction, data.sender);
+            } else if (data.type === 'delete') {
+                deleteMessageLocally(data.msgId);
+            }
         }
 
         function flushPendingMessages() {
@@ -867,11 +1282,10 @@
                 stickerPanel.appendChild(empty);
                 return;
             }
-            stickers.forEach((base64, index) => {
+            stickers.forEach((base64) => {
                 const img = document.createElement('img');
                 img.src = base64;
-                img.alt = `Стикер ${index+1}`;
-                img.title = `Стикер ${index+1}`;
+                img.alt = 'Стикер';
                 img.addEventListener('click', () => sendSticker(base64));
                 stickerPanel.appendChild(img);
             });
@@ -1069,13 +1483,21 @@
         function addMessageInteractions(div, id, sender) {
             let pressTimer = null;
             div.addEventListener('touchstart', (e) => {
-                pressTimer = setTimeout(() => { showContextMenu(e.touches[0].clientX, e.touches[0].clientY, id, sender); }, 600);
+                pressTimer = setTimeout(() => {
+                    showContextMenu(e.touches[0].clientX, e.touches[0].clientY, id, sender);
+                }, 600);
             });
             div.addEventListener('touchend', () => clearTimeout(pressTimer));
             div.addEventListener('touchmove', () => clearTimeout(pressTimer));
-            div.addEventListener('mousedown', (e) => { if (e.button === 2) showContextMenu(e.clientX, e.clientY, id, sender); });
+            div.addEventListener('mousedown', (e) => {
+                if (e.button === 2) {
+                    showContextMenu(e.clientX, e.clientY, id, sender);
+                }
+            });
             let startX = 0;
-            div.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; });
+            div.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+            });
             div.addEventListener('touchend', (e) => {
                 const endX = e.changedTouches[0].clientX;
                 if (endX - startX > 80) {
@@ -1156,10 +1578,16 @@
         }
         function sendFileInternal(blob, name, mime, id, isRetry=false) {
             if (isHost) {
-                blobToBase64(blob).then(b64 => { Object.values(clients).forEach(c => { if (c.open) c.send({ type:'file', file:blob, name, mime, sender:myName, id, data:b64 }); }); });
+                blobToBase64(blob).then(b64 => {
+                    Object.values(clients).forEach(c => {
+                        if (c.open) c.send({ type:'file', file:blob, name, mime, sender:myName, id, data:b64 });
+                    });
+                });
                 confirmPending(id);
             } else if (myDataConnection && myDataConnection.open) {
-                blobToBase64(blob).then(b64 => { myDataConnection.send({ type:'file', file:blob, name, mime, sender:myName, id, data:b64 }); });
+                blobToBase64(blob).then(b64 => {
+                    myDataConnection.send({ type:'file', file:blob, name, mime, sender:myName, id, data:b64 });
+                });
             } else { console.warn('Нет соединения, файл сохранён в pending'); }
         }
 
@@ -1174,7 +1602,9 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
                 voiceRecorder = new MediaRecorder(stream);
                 voiceChunks = [];
-                voiceRecorder.ondataavailable = (e) => { if (e.data.size>0) voiceChunks.push(e.data); };
+                voiceRecorder.ondataavailable = (e) => {
+                    if (e.data.size>0) voiceChunks.push(e.data);
+                };
                 voiceRecorder.onstop = async () => {
                     const blob = new Blob(voiceChunks, { type:'audio/ogg' });
                     voiceChunks = [];
@@ -1202,20 +1632,34 @@
                 if (!waveElement) {
                     waveElement = document.createElement('div');
                     waveElement.className = 'voice-wave';
-                    for (let i=0; i<7; i++) { const s=document.createElement('span'); waveElement.appendChild(s); }
+                    for (let i=0; i<7; i++) {
+                        const s = document.createElement('span');
+                        waveElement.appendChild(s);
+                    }
                     voiceBtn.parentNode.insertBefore(waveElement, voiceBtn.nextSibling);
                 }
-            } catch(e) { alert('Ошибка доступа к микрофону для записи: '+e.message); }
+            } catch(e) {
+                alert('Ошибка доступа к микрофону для записи: '+e.message);
+            }
         }
         function stopVoiceRecording() {
-            if (voiceRecorder && voiceRecorder.state !== 'inactive') { voiceRecorder.stop(); isRecordingVoice = false; }
+            if (voiceRecorder && voiceRecorder.state !== 'inactive') {
+                voiceRecorder.stop();
+                isRecordingVoice = false;
+            }
         }
         function sendVoiceInternal(blob, id, isRetry=false) {
             if (isHost) {
-                blobToBase64(blob).then(b64 => { Object.values(clients).forEach(c => { if (c.open) c.send({ type:'voice', file:blob, sender:myName, id, data:b64, mime:'audio/ogg' }); }); });
+                blobToBase64(blob).then(b64 => {
+                    Object.values(clients).forEach(c => {
+                        if (c.open) c.send({ type:'voice', file:blob, sender:myName, id, data:b64, mime:'audio/ogg' });
+                    });
+                });
                 confirmPending(id);
             } else if (myDataConnection && myDataConnection.open) {
-                blobToBase64(blob).then(b64 => { myDataConnection.send({ type:'voice', file:blob, sender:myName, id, data:b64, mime:'audio/ogg' }); });
+                blobToBase64(blob).then(b64 => {
+                    myDataConnection.send({ type:'voice', file:blob, sender:myName, id, data:b64, mime:'audio/ogg' });
+                });
             } else { console.warn('Нет соединения, голосовое сохранено в pending'); }
         }
 
@@ -1226,7 +1670,10 @@
         });
         async function openRecorder() {
             try {
-                const constraints = { video: { facingMode: facingMode, width: { ideal: 320 }, height: { ideal: 320 } }, audio: true };
+                const constraints = {
+                    video: { facingMode: facingMode, width: { ideal: 320 }, height: { ideal: 320 } },
+                    audio: true
+                };
                 mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
                 recPreview.srcObject = mediaStream;
                 recordingModal.classList.add('active');
@@ -1238,19 +1685,31 @@
                 recStartBtn.classList.remove('recording');
                 if (flashActive && facingMode === 'environment') {
                     const track = mediaStream.getVideoTracks()[0];
-                    if (track) { try { await track.applyConstraints({ advanced: [{ torch: true }] }); } catch(e) {} }
+                    if (track) {
+                        try {
+                            await track.applyConstraints({ advanced: [{ torch: true }] });
+                        } catch(e) {}
+                    }
                 }
             } catch(e) { alert('Ошибка доступа к камере: '+e.message); }
         }
         recStartBtn.addEventListener('click', () => {
             if (!mediaStream) return;
             if (isRecording) {
-                if (recorder) { recorder.stop(); isRecording = false; recStartBtn.textContent = '●'; recStartBtn.classList.remove('recording'); if (recTimerInterval) clearInterval(recTimerInterval); }
+                if (recorder) {
+                    recorder.stop();
+                    isRecording = false;
+                    recStartBtn.textContent = '●';
+                    recStartBtn.classList.remove('recording');
+                    if (recTimerInterval) clearInterval(recTimerInterval);
+                }
                 return;
             }
             recordedChunks = [];
             recorder = new MediaRecorder(mediaStream);
-            recorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) recordedChunks.push(e.data);
+            };
             recorder.onstop = async () => {
                 const blob = new Blob(recordedChunks, { type: 'video/mp4' });
                 const id = Date.now() + '-' + Math.random().toString(36).substr(2,6);
@@ -1276,22 +1735,39 @@
                 const secs = recSeconds % 60;
                 recTimer.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
                 if (recSeconds >= 60) {
-                    if (recorder && recorder.state !== 'inactive') { recorder.stop(); isRecording = false; recStartBtn.textContent = '●'; recStartBtn.classList.remove('recording'); if (recTimerInterval) clearInterval(recTimerInterval); }
+                    if (recorder && recorder.state !== 'inactive') {
+                        recorder.stop();
+                        isRecording = false;
+                        recStartBtn.textContent = '●';
+                        recStartBtn.classList.remove('recording');
+                        if (recTimerInterval) clearInterval(recTimerInterval);
+                    }
                 }
             }, 1000);
         });
         flipBtn.addEventListener('click', () => {
             facingMode = (facingMode === 'user') ? 'environment' : 'user';
-            if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); openRecorder(); }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(t => t.stop());
+                openRecorder();
+            }
         });
         flashBtn.addEventListener('click', () => {
             flashActive = !flashActive;
             if (flashActive && facingMode === 'environment') {
                 const track = mediaStream?.getVideoTracks()[0];
-                if (track) { try { track.applyConstraints({ advanced: [{ torch: true }] }); } catch(e) {} }
+                if (track) {
+                    try {
+                        track.applyConstraints({ advanced: [{ torch: true }] });
+                    } catch(e) {}
+                }
             } else {
                 const track = mediaStream?.getVideoTracks()[0];
-                if (track) { try { track.applyConstraints({ advanced: [{ torch: false }] }); } catch(e) {} }
+                if (track) {
+                    try {
+                        track.applyConstraints({ advanced: [{ torch: false }] });
+                    } catch(e) {}
+                }
             }
             flashBtn.style.opacity = flashActive ? '1' : '0.5';
         });
@@ -1307,10 +1783,16 @@
         }
         function sendVideoMsgInternal(blob, id, isRetry=false) {
             if (isHost) {
-                blobToBase64(blob).then(b64 => { Object.values(clients).forEach(c => { if (c.open) c.send({ type:'videoMsg', file:blob, sender:myName, id, data:b64, mime:'video/mp4' }); }); });
+                blobToBase64(blob).then(b64 => {
+                    Object.values(clients).forEach(c => {
+                        if (c.open) c.send({ type:'videoMsg', file:blob, sender:myName, id, data:b64, mime:'video/mp4' });
+                    });
+                });
                 confirmPending(id);
             } else if (myDataConnection && myDataConnection.open) {
-                blobToBase64(blob).then(b64 => { myDataConnection.send({ type:'videoMsg', file:blob, sender:myName, id, data:b64, mime:'video/mp4' }); });
+                blobToBase64(blob).then(b64 => {
+                    myDataConnection.send({ type:'videoMsg', file:blob, sender:myName, id, data:b64, mime:'video/mp4' });
+                });
             } else { console.warn('Нет соединения, кружок сохранён в pending'); }
         }
 
@@ -1325,7 +1807,9 @@
             if (reactions[emoji].includes(sender)) {
                 reactions[emoji] = reactions[emoji].filter(u => u !== sender);
                 if (reactions[emoji].length === 0) delete reactions[emoji];
-            } else { reactions[emoji].push(sender); }
+            } else {
+                reactions[emoji].push(sender);
+            }
             msgEl.dataset.reactions = JSON.stringify(reactions);
             const reactionsDiv = msgEl.querySelector('.reactions');
             if (reactionsDiv) {
@@ -1365,14 +1849,18 @@
             ctxDelete.style.display = (sender === myName) ? 'block' : 'none';
         }
         document.addEventListener('click', () => contextMenu.classList.remove('active'));
-        document.addEventListener('contextmenu', (e) => { if (!e.target.closest('.msg')) contextMenu.classList.remove('active'); });
+        document.addEventListener('contextmenu', (e) => {
+            if (!e.target.closest('.msg')) contextMenu.classList.remove('active');
+        });
         document.querySelectorAll('[data-reaction]').forEach(el => {
             el.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const emoji = el.dataset.reaction;
                 if (selectedMsgId) {
                     if (isHost) {
-                        Object.values(clients).forEach(c => { if (c.open) c.send({ type:'reaction', msgId:selectedMsgId, reaction:emoji, sender:myName }); });
+                        Object.values(clients).forEach(c => {
+                            if (c.open) c.send({ type:'reaction', msgId:selectedMsgId, reaction:emoji, sender:myName });
+                        });
                         updateReaction(selectedMsgId, emoji, myName);
                     } else if (myDataConnection && myDataConnection.open) {
                         myDataConnection.send({ type:'reaction', msgId:selectedMsgId, reaction:emoji, sender:myName });
@@ -1385,7 +1873,9 @@
             e.stopPropagation();
             if (selectedMsgId) {
                 if (isHost) {
-                    Object.values(clients).forEach(c => { if (c.open) c.send({ type:'delete', msgId:selectedMsgId }); });
+                    Object.values(clients).forEach(c => {
+                        if (c.open) c.send({ type:'delete', msgId:selectedMsgId });
+                    });
                     deleteMessageLocally(selectedMsgId);
                 } else if (myDataConnection && myDataConnection.open) {
                     myDataConnection.send({ type:'delete', msgId:selectedMsgId });
@@ -1409,14 +1899,6 @@
         // =================================================================
         // 15. НАВИГАЦИЯ, МАСШТАБ, ТЕМА, ФОН, ЦВЕТ
         // =================================================================
-        navItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const tab = item.dataset.tab;
-                navItems.forEach(n => n.classList.remove('active'));
-                item.classList.add('active');
-                Object.keys(tabs).forEach(key => tabs[key].classList.toggle('active', key === tab));
-            });
-        });
         function applyZoom(value) {
             const percent = parseInt(value);
             mainWrapper.style.transform = `scale(${percent / 100})`;
@@ -1424,7 +1906,11 @@
             localStorage.setItem('zoomLevel', percent);
         }
         zoomSlider.addEventListener('input', (e) => applyZoom(e.target.value));
-        zoomDefaultBtn.addEventListener('click', () => { zoomSlider.value = 100; applyZoom(100); });
+        zoomDefaultBtn.addEventListener('click', () => {
+            zoomSlider.value = 100;
+            applyZoom(100);
+        });
+
         function applyTheme(light) {
             document.documentElement.classList.toggle('light', light);
             localStorage.setItem('lightTheme', light);
@@ -1434,7 +1920,6 @@
         myColorPicker.addEventListener('input', (e) => {
             myColor = e.target.value;
             localStorage.setItem(MY_COLOR_KEY, myColor);
-            // Перерисовываем свои сообщения с новым цветом
             document.querySelectorAll('.msg.me .sender').forEach(el => el.style.color = myColor);
         });
 
@@ -1445,6 +1930,35 @@
                 localStorage.setItem(BG_KEY, bg);
                 bgButtons.forEach(b => b.classList.remove('active-bg'));
                 btn.classList.add('active-bg');
+            });
+        });
+
+        // ===== МЕНЮ =====
+        function toggleMenu(open) {
+            if (open === undefined) {
+                const isOpen = sideMenu.classList.contains('open');
+                open = !isOpen;
+            }
+            sideMenu.classList.toggle('open', open);
+            menuOverlay.classList.toggle('active', open);
+        }
+
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMenu();
+        });
+        menuOverlay.addEventListener('click', () => toggleMenu(false));
+
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const tab = item.dataset.tab;
+                // переключаем табы
+                menuItems.forEach(m => m.classList.remove('active'));
+                item.classList.add('active');
+                Object.keys(tabs).forEach(key => {
+                    tabs[key].classList.toggle('active', key === tab);
+                });
+                toggleMenu(false);
             });
         });
 
@@ -1460,22 +1974,54 @@
         }
         playPauseBtn.addEventListener('click', () => {
             if (!currentAudio) return;
-            if (currentAudio.paused) { currentAudio.play(); playPauseBtn.textContent = '⏸'; }
-            else { currentAudio.pause(); playPauseBtn.textContent = '▶'; }
+            if (currentAudio.paused) {
+                currentAudio.play();
+                playPauseBtn.textContent = '⏸';
+            } else {
+                currentAudio.pause();
+                playPauseBtn.textContent = '▶';
+            }
         });
-        volumeSlider.addEventListener('input', (e) => { if (!currentAudio) return; currentAudio.volume = parseFloat(e.target.value); });
-        speedSelect.addEventListener('change', (e) => { if (!currentAudio) return; currentAudio.playbackRate = parseFloat(e.target.value); });
-        closePlayerBtn.addEventListener('click', () => { if (currentAudio) { currentAudio.pause(); currentAudio = null; } audioPlayer.classList.remove('show'); });
-        document.addEventListener('ended', (e) => { if (e.target === currentAudio) playPauseBtn.textContent = '▶'; }, true);
+        volumeSlider.addEventListener('input', (e) => {
+            if (!currentAudio) return;
+            currentAudio.volume = parseFloat(e.target.value);
+        });
+        speedSelect.addEventListener('change', (e) => {
+            if (!currentAudio) return;
+            currentAudio.playbackRate = parseFloat(e.target.value);
+        });
+        closePlayerBtn.addEventListener('click', () => {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            audioPlayer.classList.remove('show');
+        });
+        document.addEventListener('ended', (e) => {
+            if (e.target === currentAudio) playPauseBtn.textContent = '▶';
+        }, true);
 
         // =================================================================
-        // 17. ИНИЦИАЛИЗАЦИЯ
+        // 17. ТАБЫ (для совместимости с меню)
+        // =================================================================
+        const tabs = {
+            room: document.getElementById('roomTab'),
+            chat: document.getElementById('chatTab'),
+            settings: document.getElementById('settingsTab'),
+        };
+
+        // =================================================================
+        // 18. ИНИЦИАЛИЗАЦИЯ
         // =================================================================
         function init() {
-            if (!localStorage.getItem('userChoice')) { showModal(); }
-            else {
+            if (!localStorage.getItem('userChoice')) {
+                showModal();
+            } else {
                 loadSettings();
-                startLocalStream().then(() => { if (localStream) initConnection(); else initConnection(); });
+                startLocalStream().then(() => {
+                    if (localStream) initConnection();
+                    else initConnection();
+                });
             }
             loadSettings();
             statusEl.textContent = '❌ Не подключено';
@@ -1484,7 +2030,9 @@
         }
 
         chatSendBtn.addEventListener('click', sendTextMessage);
-        chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendTextMessage(); });
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendTextMessage();
+        });
 
         window.addEventListener('beforeunload', () => {
             if (localStream) localStream.getTracks().forEach(t=>t.stop());
@@ -1496,13 +2044,17 @@
         });
 
         const saved = localStorage.getItem('userChoice');
-        if (saved) { userRadios.forEach(r => r.checked = (r.value === saved)); }
+        if (saved) {
+            userRadios.forEach(r => r.checked = (r.value === saved));
+        }
         userRadios.forEach(radio => {
-            radio.addEventListener('change', (e) => { if (e.target.checked) setUser(e.target.value); });
+            radio.addEventListener('change', (e) => {
+                if (e.target.checked) setUser(e.target.value);
+            });
         });
 
         init();
-        console.log('манго арбузник – живой и работающий!');
+        console.log('манго арбузник – с новым меню и широким чатом!');
     </script>
 </body>
 </html>
