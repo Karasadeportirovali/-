@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
+        /* ===== ВСЕ СТИЛИ (те же, что в предыдущей версии) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg: #0a0a0a; --bg2: #141414; --bg3: #1c1c1c; --bg4: #252525; --bg5: #2e2e2e;
@@ -239,7 +240,7 @@
             <span class="dot online" id="menuStatusDot"></span>
             <span id="menuStatusText">Подключено</span>
         </div>
-        <div class="version-info">v.6.2</div>
+        <div class="version-info">v.6.3 (email/пароль)</div>
     </div>
 
     <!-- ОСНОВНОЙ БЛОК -->
@@ -378,7 +379,6 @@
         const userSearchResults = document.getElementById('userSearchResults');
         const createChatConfirm = document.getElementById('createChatConfirm');
         const createChatCancel = document.getElementById('createChatCancel');
-        const moreClearHistory = document.getElementById('moreClearHistory');
         const logoutBtn = document.getElementById('logoutBtn');
         const menuBtn = document.getElementById('menuBtn');
         const menuOverlay = document.getElementById('menuOverlay');
@@ -391,7 +391,7 @@
         };
 
         // ============================================================
-        // 3. ПЕРЕКЛЮЧЕНИЕ РЕЖИМА (ВХОД / РЕГИСТРАЦИЯ)
+        // 3. ПЕРЕКЛЮЧЕНИЕ РЕЖИМА
         // ============================================================
         function toggleLoginMode() {
             isLoginMode = !isLoginMode;
@@ -402,7 +402,7 @@
         toggleLoginLink.addEventListener('click', toggleLoginMode);
 
         // ============================================================
-        // 4. ОБРАБОТЧИК КНОПКИ (ВХОД / РЕГИСТРАЦИЯ)
+        // 4. ОБРАБОТЧИК КНОПКИ (ВХОД / РЕГИСТРАЦИЯ) – EMAIL + ПАРОЛЬ
         // ============================================================
         loginBtn.addEventListener('click', async () => {
             const username = loginUsername.value.trim();
@@ -412,48 +412,46 @@
                 return;
             }
 
+            // Генерируем email из ника (только латиница)
+            const email = username.toLowerCase().replace(/[^a-z0-9]/g, '') + '@arbuznik.app';
+
             if (isLoginMode) {
                 // ===== ВХОД =====
-                const usersRef = database.ref('users');
-                const snapshot = await usersRef.orderByChild('username').equalTo(username).once('value');
-                if (!snapshot.exists()) {
-                    alert('Пользователь не найден');
-                    return;
-                }
-                let foundUid = null;
-                snapshot.forEach(child => {
-                    const data = child.val();
-                    if (data.password === password) {
-                        foundUid = child.key;
+                try {
+                    const cred = await auth.signInWithEmailAndPassword(email, password);
+                    const uid = cred.user.uid;
+                    // Получаем ник из базы
+                    const userSnap = await database.ref('users/' + uid).once('value');
+                    const userData = userSnap.val();
+                    if (userData && userData.username) {
+                        currentUser = { uid, username: userData.username };
+                        loginScreen.classList.add('hidden');
+                        mainWrapper.style.display = 'flex';
+                        loadChats();
+                        updateClock();
+                    } else {
+                        alert('Ошибка: пользователь не найден в базе');
+                        await auth.signOut();
                     }
-                });
-                if (!foundUid) {
-                    alert('Неверный пароль');
-                    return;
+                } catch (e) {
+                    alert('Ошибка входа: ' + e.message);
                 }
-                // Вход выполнен
-                const userData = await usersRef.child(foundUid).once('value');
-                currentUser = { uid: foundUid, username: userData.val().username };
-                loginScreen.classList.add('hidden');
-                mainWrapper.style.display = 'flex';
-                loadChats();
-                updateClock();
             } else {
                 // ===== РЕГИСТРАЦИЯ =====
+                // Проверяем, существует ли уже такой ник
                 const usersRef = database.ref('users');
                 const snapshot = await usersRef.orderByChild('username').equalTo(username).once('value');
                 if (snapshot.exists()) {
                     alert('Ник уже занят');
                     return;
                 }
-                // Создаём анонимного пользователя
                 try {
-                    const cred = await auth.signInAnonymously();
+                    // Создаём пользователя с email+пароль
+                    const cred = await auth.createUserWithEmailAndPassword(email, password);
                     const uid = cred.user.uid;
-                    // Сохраняем данные пользователя
+                    // Сохраняем ник в базу
                     await usersRef.child(uid).set({
-                        username: username,
-                        password: password
+                        username: username
                     });
                     currentUser = { uid, username };
                     loginScreen.classList.add('hidden');
@@ -480,6 +478,8 @@
                     loadChats();
                     updateClock();
                 } else {
+                    // Если uid есть, но нет ника – выходим
+                    await auth.signOut();
                     loginScreen.classList.remove('hidden');
                 }
             } else {
@@ -673,7 +673,7 @@
         });
 
         // ============================================================
-        // 11. НАСТРОЙКИ (масштаб, тема)
+        // 11. НАСТРОЙКИ
         // ============================================================
         const zoomSlider = document.getElementById('zoomSlider');
         const zoomValue = document.getElementById('zoomValue');
@@ -698,7 +698,6 @@
         }
         lightThemeToggle.addEventListener('change', (e) => applyTheme(e.target.checked));
 
-        // Загрузка сохранённых
         const savedZoom = localStorage.getItem('zoomLevel');
         if (savedZoom) { zoomSlider.value = savedZoom; applyZoom(savedZoom); }
         const savedTheme = localStorage.getItem('lightTheme') === 'true';
@@ -754,7 +753,7 @@
         });
 
         // ============================================================
-        // 13. ВИДЕОЧАТ (упрощённая версия)
+        // 13. ВИДЕОЧАТ (упрощённая версия, как в предыдущей)
         // ============================================================
         const localVideo = document.getElementById('localVideo');
         const remoteVideo = document.getElementById('remoteVideo');
@@ -981,7 +980,7 @@
             document.getElementById('splash').classList.add('hidden');
         }, 2000);
 
-        console.log('арбузник v.6.2 – регистрация работает!');
+        console.log('арбузник v.6.3 – регистрация через email/пароль работает!');
     </script>
 </body>
 </html>
