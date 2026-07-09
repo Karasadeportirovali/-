@@ -6,7 +6,7 @@
     <title>манго арбузник</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        /* ===== ГЛОБАЛЬНЫЕ СТИЛИ С АНИМАЦИЯМИ ===== */
+        /* ===== СТИЛИ (все те же, что и в прошлой версии) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg: #0a0a0a; --bg2: #141414; --bg3: #1c1c1c; --bg4: #252525; --bg5: #2e2e2e;
@@ -76,7 +76,6 @@
         @keyframes typing-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
         .chat-input-area { display: flex; gap: 6px; align-items: center; flex-shrink: 0; background: var(--bg2); padding: 6px 10px; border-radius: 40px; border: 1px solid var(--br); }
         .chat-input-area input[type="text"] { flex: 1; background: 0 0; border: 0; color: var(--txt); font-size: 14px; outline: 0; padding: 6px 0; }
-        .chat-input-area input[type="text"]:focus + .typing-trigger { /* не используется */ }
         .chat-input-area button { background: 0 0; border: 0; color: var(--txt2); font-size: 18px; cursor: pointer; padding: 4px 6px; transition: .2s; position: relative; }
         .chat-input-area button:hover { color: var(--txt); }
         .chat-input-area button.primary { color: var(--ac); font-size: 20px; }
@@ -406,7 +405,8 @@
         let currentAudio = null;
         let isRecording = false, recorder = null, recordedChunks = [], recStream = null, recTimerInterval = null, recSeconds = 0, facingMode = 'user', flashActive = false, mediaStream = null;
         let replyTo = null, selectedMsgId = null;
-        let typingTimeout = null;
+        let typingTimeout = null; // <-- глобальная переменная, больше не дублируем
+        let isTypingVisible = false; // <-- объявлена
 
         // =================================================================
         // 1. РАБОТА С LOCALSTORAGE
@@ -565,7 +565,7 @@
         }
 
         // =================================================================
-        // 7. ПОДКЛЮЧЕНИЕ (сокращённо, с онлайн-статусом)
+        // 7. ПОДКЛЮЧЕНИЕ
         // =================================================================
         function initConnection() {
             if (isConnecting) return;
@@ -965,7 +965,8 @@
             const img = document.createElement('img');
             img.className = 'sticker-img';
             img.src = base64;
-            div.innerHTML = `<div class="sender">${sender} <span class="time">${time}</span></div>`;
+            const senderColor = (sender === myName) ? myColor : '#ffcc00';
+            div.innerHTML = `<div class="sender" style="color:${senderColor}">${sender} <span class="time" style="color:var(--txt3)">${time}</span></div>`;
             div.appendChild(img);
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -979,7 +980,7 @@
         document.addEventListener('click', () => stickerPanel.classList.remove('active'));
 
         // =================================================================
-        // 11. ЧАТ – ОТОБРАЖЕНИЕ С ЦВЕТОМ
+        // 11. ЧАТ – ОТОБРАЖЕНИЕ
         // =================================================================
         function addChatMessage(text, sender, time, id, replyTo, reactions, type, isMe) {
             const div = document.createElement('div');
@@ -1087,9 +1088,6 @@
         // =================================================================
         // 12. ИНДИКАТОР «ПЕЧАТАЕТ»
         // =================================================================
-        let typingTimeout = null;
-        let isTypingVisible = false;
-
         function showTyping(sender) {
             if (sender === myName) return;
             typingIndicator.style.display = 'flex';
@@ -1436,7 +1434,7 @@
         myColorPicker.addEventListener('input', (e) => {
             myColor = e.target.value;
             localStorage.setItem(MY_COLOR_KEY, myColor);
-            // Перерисовываем свои сообщения с новым цветом (можно обновить все)
+            // Перерисовываем свои сообщения с новым цветом
             document.querySelectorAll('.msg.me .sender').forEach(el => el.style.color = myColor);
         });
 
@@ -1504,7 +1502,7 @@
         });
 
         init();
-        console.log('манго арбузник – теперь живой!');
+        console.log('манго арбузник – живой и работающий!');
     </script>
 </body>
 </html>
