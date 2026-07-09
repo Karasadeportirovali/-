@@ -6,7 +6,6 @@
     <title>манго арбузник</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        /* ===== ГЛОБАЛЬНЫЕ СТИЛИ (с анимациями) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg: #0a0a0a; --bg2: #141414; --bg3: #1c1c1c; --bg4: #252525; --bg5: #2e2e2e;
@@ -15,7 +14,7 @@
             --msg-other-bg: #1a2a3a;
         }
         .light { --bg: #f5f5f5; --bg2: #e8e8e8; --bg3: #d8d8d8; --bg4: #d0d0d0; --bg5: #c0c0c0; --br: #b0b0b0; --txt: #1a1a1a; --txt2: #444; --txt3: #777; --ac: #222; --ach: #555; --sh: 0 2px 10px rgba(0,0,0,.15); --scr: #999; --msg-other-bg: #d0e0f0; }
-        body { background: var(--bg); color: var(--txt); font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif; height: 100vh; display: flex; overflow: hidden; }
+        body { background: var(--bg); color: var(--txt); font-family: 'Segoe UI', Roboto, sans-serif; height: 100vh; display: flex; overflow: hidden; }
         .sidebar { width: 60px; background: var(--bg2); display: flex; flex-direction: column; align-items: center; padding-top: 16px; border-right: 1px solid var(--br); flex-shrink: 0; z-index: 10; }
         .sidebar .logo { font-size: 18px; font-weight: 900; color: var(--ac); margin-bottom: 20px; writing-mode: vertical-lr; letter-spacing: 4px; }
         .sidebar .nav-item { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 14px; margin-bottom: 8px; cursor: pointer; transition: .2s; color: var(--txt2); font-size: 20px; background: 0 0; border: none; }
@@ -50,7 +49,7 @@
         .chat-messages .msg.me { align-self: flex-end; background: var(--bg5); border: 1px solid var(--br); }
         .chat-messages .msg.other { align-self: flex-start; background: var(--msg-other-bg); border: 1px solid var(--br); }
         @keyframes msgIn { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
-        .chat-messages .msg .sender { font-size: 11px; color: var(--txt2); margin-bottom: 2px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .chat-messages .msg .sender { font-size: 11px; color: var(--txt2); margin-bottom: 2px; font-weight: 600; }
         .chat-messages .msg .time { font-size: 9px; color: var(--txt3); margin-left: 6px; }
         .chat-messages .msg .reply-to { font-size: 11px; color: var(--ac); background: var(--bg3); padding: 2px 8px; border-radius: 8px; margin-bottom: 3px; border-left: 3px solid var(--ac); }
         .chat-messages .msg .content { word-wrap: break-word; }
@@ -334,7 +333,6 @@
         let sentIds = new Set(), pendingMessages = [];
         let currentAudio = null;
 
-        // Для кружков
         let isRecording = false;
         let recorder = null;
         let recordedChunks = [];
@@ -345,10 +343,7 @@
         let flashActive = false;
         let mediaStream = null;
 
-        // Для реплаев
         let replyTo = null;
-
-        // Для контекстного меню
         let selectedMsgId = null;
 
         // =================================================================
@@ -372,7 +367,28 @@
         });
 
         // =================================================================
-        // 3. НАСТРОЙКИ И ИСТОРИЯ
+        // 3. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ BASE64
+        // =================================================================
+        function blobToBase64(blob) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        function base64ToBlob(base64, mime) {
+            const byteString = atob(base64.split(',')[1]);
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([ab], { type: mime });
+        }
+
+        // =================================================================
+        // 4. НАСТРОЙКИ И ИСТОРИЯ
         // =================================================================
         function loadSettings() {
             const savedUser = localStorage.getItem('userChoice');
@@ -383,13 +399,10 @@
                 document.querySelector('input[name="userChoice"][value="karasik"]').checked = true;
                 setUser('karasik');
             } else {
-                // по умолчанию Карасик, но не отмечаем радио
                 myName = 'Карасик';
                 localLabel.textContent = myName;
                 remoteLabel.textContent = 'Катер';
-                // не сохраняем, чтобы при первом запуске модалка показала
             }
-            // Масштаб
             const savedZoom = localStorage.getItem('zoomLevel');
             if (savedZoom) {
                 const val = parseInt(savedZoom);
@@ -398,11 +411,9 @@
             } else {
                 applyZoom(100);
             }
-            // Тема
             const savedTheme = localStorage.getItem('lightTheme') === 'true';
             lightThemeToggle.checked = savedTheme;
             applyTheme(savedTheme);
-            // Загружаем историю для текущего пользователя
             loadChatHistoryForUser(myName);
         }
 
@@ -418,23 +429,38 @@
             }
             localStorage.setItem('userChoice', choice);
             loadChatHistoryForUser(myName);
-            // Также обновляем радио-кнопки
-            document.querySelectorAll('input[name="userChoice"]').forEach(r => {
-                r.checked = (r.value === choice);
-            });
+            userRadios.forEach(r => r.checked = (r.value === choice));
         }
 
-        function loadChatHistoryForUser(user) {
+        async function loadChatHistoryForUser(user) {
             const key = `chatHistory_${user}`;
             chatMessages.innerHTML = '';
             const saved = localStorage.getItem(key);
             if (saved) {
                 try {
                     const msgs = JSON.parse(saved);
-                    msgs.forEach(msg => {
+                    for (const msg of msgs) {
                         const isMe = (msg.sender === user);
+                        // Если это медиа-сообщение, восстановить blob из base64
+                        if (msg.type === 'file' || msg.type === 'voice' || msg.type === 'videoMsg') {
+                            if (msg.data) {
+                                const blob = base64ToBlob(msg.data, msg.mime || 'application/octet-stream');
+                                const url = URL.createObjectURL(blob);
+                                if (msg.type === 'file') {
+                                    const name = msg.name || 'file';
+                                    const mime = msg.mime || 'application/octet-stream';
+                                    displayFileMessage(msg.sender, url, name, mime, isMe, msg.id);
+                                } else if (msg.type === 'voice') {
+                                    displayAudioMessage(msg.sender, url, isMe, msg.id);
+                                } else if (msg.type === 'videoMsg') {
+                                    displayVideoMessage(msg.sender, url, isMe, msg.id);
+                                }
+                                continue;
+                            }
+                        }
+                        // Текстовое сообщение
                         addChatMessage(msg.text, msg.sender, msg.time, msg.id, msg.replyTo, msg.reactions, msg.type, isMe);
-                    });
+                    }
                 } catch(e) {}
             }
         }
@@ -447,7 +473,7 @@
         }
 
         // =================================================================
-        // 4. МОДАЛКА ВЫБОРА
+        // 5. МОДАЛКА ВЫБОРА
         // =================================================================
         function showModal() {
             modal.classList.remove('hidden');
@@ -468,7 +494,7 @@
         });
 
         // =================================================================
-        // 5. КАМЕРА / МИКРОФОН
+        // 6. КАМЕРА / МИКРОФОН
         // =================================================================
         async function startLocalStream() {
             if (localStream) return localStream;
@@ -483,7 +509,7 @@
         }
 
         // =================================================================
-        // 6. ПОДКЛЮЧЕНИЕ (TURN)
+        // 7. ПОДКЛЮЧЕНИЕ
         // =================================================================
         function initConnection() {
             if (isConnecting) return;
@@ -631,32 +657,43 @@
             const clientId = conn.peer;
             clients[clientId] = conn;
             conn.on('open', () => {
-                // Отправляем историю хоста (текущего пользователя) новому клиенту
                 const key = `chatHistory_${myName}`;
                 const history = JSON.parse(localStorage.getItem(key) || '[]');
                 history.forEach(msg => {
-                    conn.send({ type:'chat', text:msg.text, sender:msg.sender, time:msg.time, id:msg.id, replyTo:msg.replyTo, reactions:msg.reactions, type:msg.type });
+                    conn.send({ type:'chat', text:msg.text, sender:msg.sender, time:msg.time, id:msg.id, replyTo:msg.replyTo, reactions:msg.reactions, type:msg.type, data:msg.data, mime:msg.mime, name:msg.name });
                 });
                 broadcastChatMessage('🔹 ' + clientId + ' присоединился к чату', 'system');
             });
             conn.on('data', (data) => {
                 if (data.type === 'chat') {
                     const msg = { text:data.text, sender:data.sender||clientId, time:new Date().toLocaleTimeString(), id:data.id, replyTo:data.replyTo, reactions:data.reactions, type:data.type };
-                    // Сохраняем в историю хоста
                     const key = `chatHistory_${myName}`;
                     let history = JSON.parse(localStorage.getItem(key) || '[]');
                     history.push(msg);
                     localStorage.setItem(key, JSON.stringify(history));
                     broadcastChatMessage(msg.text, msg.sender, msg.time, msg.id, msg.replyTo, msg.reactions, msg.type);
                     if (data.id) conn.send({ type:'ack', id:data.id });
-                } else if (data.type === 'file') {
-                    broadcastFile(data.file, data.name, data.mime, clientId, data.id);
-                    if (data.id) conn.send({ type:'ack', id:data.id });
-                } else if (data.type === 'voice') {
-                    broadcastVoice(data.file, clientId, data.id);
-                    if (data.id) conn.send({ type:'ack', id:data.id });
-                } else if (data.type === 'videoMsg') {
-                    broadcastVideoMsg(data.file, clientId, data.id);
+                } else if (data.type === 'file' || data.type === 'voice' || data.type === 'videoMsg') {
+                    // Пересылаем медиа всем клиентам
+                    Object.values(clients).forEach(c => { if (c.open) c.send(data); });
+                    if (data.sender !== myName) {
+                        // Сохраняем в историю хоста
+                        const msg = { type:data.type, sender:data.sender, time:new Date().toLocaleTimeString(), id:data.id, data:data.data, mime:data.mime, name:data.name };
+                        const key = `chatHistory_${myName}`;
+                        let history = JSON.parse(localStorage.getItem(key) || '[]');
+                        history.push(msg);
+                        localStorage.setItem(key, JSON.stringify(history));
+                        // Отображаем
+                        const blob = base64ToBlob(data.data, data.mime);
+                        const url = URL.createObjectURL(blob);
+                        if (data.type === 'file') {
+                            displayFileMessage(data.sender, url, data.name, data.mime, false, data.id);
+                        } else if (data.type === 'voice') {
+                            displayAudioMessage(data.sender, url, false, data.id);
+                        } else if (data.type === 'videoMsg') {
+                            displayVideoMessage(data.sender, url, false, data.id);
+                        }
+                    }
                     if (data.id) conn.send({ type:'ack', id:data.id });
                 } else if (data.type === 'reaction') {
                     Object.values(clients).forEach(c => { if (c.open) c.send({ type:'reaction', msgId:data.msgId, reaction:data.reaction, sender:data.sender }); });
@@ -678,40 +715,9 @@
             const msg = { type:'chat', text, sender, time:timeStr, id, replyTo, reactions, type:type||'text' };
             Object.values(clients).forEach(c => { if (c.open) c.send(msg); });
             if (sender !== myName) {
-                // Сохраняем чужое сообщение в свою историю
                 const msgToSave = { text, sender, time:timeStr, id, replyTo, reactions, type:type||'text' };
                 saveChatMessage(msgToSave);
                 addChatMessage(text, sender, timeStr, id, replyTo, reactions, type||'text', false);
-            }
-        }
-
-        function broadcastFile(file, name, mime, sender, id) {
-            Object.values(clients).forEach(c => { if (c.open) c.send({ type:'file', file, name, mime, sender, id }); });
-            if (sender !== myName) {
-                const msg = { text:`[Файл: ${name}]`, sender, time:new Date().toLocaleTimeString(), id, replyTo:null, reactions:null, type:'file' };
-                saveChatMessage(msg);
-                displayFileMessage(sender, URL.createObjectURL(file), name, mime, false, id);
-            }
-        }
-
-        function broadcastVoice(file, sender, id) {
-            Object.values(clients).forEach(c => { if (c.open) c.send({ type:'voice', file, sender, id }); });
-            if (sender !== myName) {
-                const duration = Math.round(file.size / 16000);
-                const durationStr = `${Math.floor(duration/60)}:${(duration%60).toString().padStart(2,'0')}`;
-                const msg = { text:durationStr, sender, time:new Date().toLocaleTimeString(), id, replyTo:null, reactions:null, type:'voice' };
-                saveChatMessage(msg);
-                displayAudioMessage(sender, URL.createObjectURL(file), false, id);
-            }
-        }
-
-        function broadcastVideoMsg(file, sender, id) {
-            Object.values(clients).forEach(c => { if (c.open) c.send({ type:'videoMsg', file, sender, id }); });
-            if (sender !== myName) {
-                const url = URL.createObjectURL(file);
-                const msg = { text:url, sender, time:new Date().toLocaleTimeString(), id, replyTo:null, reactions:null, type:'videoMsg' };
-                saveChatMessage(msg);
-                displayVideoMessage(sender, url, false, id);
             }
         }
 
@@ -724,7 +730,7 @@
             }
         }
 
-        function handleIncomingData(data) {
+        async function handleIncomingData(data) {
             if (data.type === 'ack') { confirmPending(data.id); return; }
             if (data.id && sentIds.has(data.id)) return;
             const isMe = (data.sender === myName);
@@ -734,27 +740,20 @@
                     const msg = { text:data.text, sender:data.sender, time:data.time, id:data.id, replyTo:data.replyTo, reactions:data.reactions, type:data.type };
                     saveChatMessage(msg);
                 }
-            } else if (data.type === 'file') {
+            } else if (data.type === 'file' || data.type === 'voice' || data.type === 'videoMsg') {
                 if (!isMe) {
-                    const msg = { text:`[Файл: ${data.name}]`, sender:data.sender, time:data.time, id:data.id, replyTo:null, reactions:null, type:'file' };
+                    const msg = { type:data.type, sender:data.sender, time:data.time, id:data.id, data:data.data, mime:data.mime, name:data.name };
                     saveChatMessage(msg);
                 }
-                displayFileMessage(data.sender, URL.createObjectURL(data.file), data.name, data.mime, isMe, data.id);
-            } else if (data.type === 'voice') {
-                if (!isMe) {
-                    const duration = Math.round(data.file.size / 16000);
-                    const durationStr = `${Math.floor(duration/60)}:${(duration%60).toString().padStart(2,'0')}`;
-                    const msg = { text:durationStr, sender:data.sender, time:data.time, id:data.id, replyTo:null, reactions:null, type:'voice' };
-                    saveChatMessage(msg);
+                const blob = base64ToBlob(data.data, data.mime);
+                const url = URL.createObjectURL(blob);
+                if (data.type === 'file') {
+                    displayFileMessage(data.sender, url, data.name, data.mime, isMe, data.id);
+                } else if (data.type === 'voice') {
+                    displayAudioMessage(data.sender, url, isMe, data.id);
+                } else if (data.type === 'videoMsg') {
+                    displayVideoMessage(data.sender, url, isMe, data.id);
                 }
-                displayAudioMessage(data.sender, URL.createObjectURL(data.file), isMe, data.id);
-            } else if (data.type === 'videoMsg') {
-                if (!isMe) {
-                    const url = URL.createObjectURL(data.file);
-                    const msg = { text:url, sender:data.sender, time:data.time, id:data.id, replyTo:null, reactions:null, type:'videoMsg' };
-                    saveChatMessage(msg);
-                }
-                displayVideoMessage(data.sender, URL.createObjectURL(data.file), isMe, data.id);
             } else if (data.type === 'reaction') {
                 updateReaction(data.msgId, data.reaction, data.sender);
             } else if (data.type === 'delete') {
@@ -774,7 +773,7 @@
         }
 
         // =================================================================
-        // 7. ВИДЕО
+        // 8. ВИДЕО
         // =================================================================
         function setupCall(call) {
             currentCall = call;
@@ -794,7 +793,7 @@
         }
 
         // =================================================================
-        // 8. УПРАВЛЕНИЕ КОМНАТОЙ (ВИДЕОЧАТ)
+        // 9. УПРАВЛЕНИЕ КОМНАТОЙ
         // =================================================================
         camBtn.addEventListener('click', ()=>{
             if (!localStream) return;
@@ -809,7 +808,6 @@
             if (t.enabled) { camBtn.classList.add('active'); camBtn.textContent='📷 Камера'; }
             else { camBtn.classList.remove('active'); camBtn.textContent='📷 Выкл'; }
         }
-
         micBtn.addEventListener('click', ()=>{
             if (!localStream) return;
             const tracks = localStream.getAudioTracks();
@@ -819,7 +817,6 @@
             if (t.enabled) { micBtn.classList.add('active'); micBtn.textContent='🎤 Микрофон'; }
             else { micBtn.classList.remove('active'); micBtn.textContent='🎤 Выкл'; }
         });
-
         screenBtn.addEventListener('click', async ()=>{
             if (isScreenSharing) stopScreenShare();
             else await startScreenShare();
@@ -865,7 +862,6 @@
                     camBtn.textContent = '📷 Камера';
                 }).catch(err => console.error('Не удалось вернуть камеру:', err));
         }
-
         disconnectBtn.addEventListener('click', ()=>{
             if (currentCall) { currentCall.close(); currentCall=null; }
             if (peer) { peer.destroy(); peer=null; }
@@ -881,7 +877,7 @@
         });
 
         // =================================================================
-        // 9. ЧАТ – ОТОБРАЖЕНИЕ
+        // 10. ЧАТ – ОТОБРАЖЕНИЕ
         // =================================================================
         function addChatMessage(text, sender, time, id, replyTo, reactions, type, isMe) {
             const div = document.createElement('div');
@@ -927,7 +923,6 @@
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            // Обработчики для аудио
             if (type === 'voice') {
                 const btn = div.querySelector('.play-audio');
                 const audio = new Audio(text);
@@ -940,35 +935,8 @@
                 audio.onended = () => { btn.textContent = '▶'; playing = false; };
             }
 
-            // Долгое нажатие
-            let pressTimer = null;
-            div.addEventListener('touchstart', (e) => {
-                pressTimer = setTimeout(() => {
-                    showContextMenu(e.touches[0].clientX, e.touches[0].clientY, id, sender);
-                }, 600);
-            });
-            div.addEventListener('touchend', () => clearTimeout(pressTimer));
-            div.addEventListener('touchmove', () => clearTimeout(pressTimer));
-            // ПК
-            div.addEventListener('mousedown', (e) => {
-                if (e.button === 2) {
-                    showContextMenu(e.clientX, e.clientY, id, sender);
-                }
-            });
-
-            // Свайп вправо
-            let startX = 0;
-            div.addEventListener('touchstart', (e) => {
-                startX = e.touches[0].clientX;
-            });
-            div.addEventListener('touchend', (e) => {
-                const endX = e.changedTouches[0].clientX;
-                if (endX - startX > 80) {
-                    const text = div.querySelector('.content')?.textContent || '[медиа]';
-                    setReply(id, sender, text);
-                }
-            });
-
+            // Долгое нажатие и свайп
+            addMessageInteractions(div, id, sender);
             return div;
         }
 
@@ -989,7 +957,6 @@
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             addMessageInteractions(div, id, sender);
-            return div;
         }
 
         function displayAudioMessage(sender, url, isMe, id) {
@@ -1004,7 +971,6 @@
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             addMessageInteractions(div, id, sender);
-            return div;
         }
 
         function displayVideoMessage(sender, url, isMe, id) {
@@ -1015,11 +981,10 @@
             div.dataset.msgId = id;
             div.dataset.sender = sender;
             const time = new Date().toLocaleTimeString();
-            div.innerHTML = `<div class="sender">${sender} <span class="time">${time}</span></div><video controls src="${url}" style="max-width:180px;border-radius:10px;"></video>`;
+            div.innerHTML = `<div class="sender">${sender} <span class="time">${time}</span></div><video class="circle-video" src="${url}" controls></video>`;
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             addMessageInteractions(div, id, sender);
-            return div;
         }
 
         function addMessageInteractions(div, id, sender) {
@@ -1050,7 +1015,7 @@
         }
 
         // =================================================================
-        // 10. ОТПРАВКА СООБЩЕНИЙ
+        // 11. ОТПРАВКА СООБЩЕНИЙ
         // =================================================================
         function sendTextMessage() {
             const text = chatInput.value.trim();
@@ -1079,10 +1044,7 @@
         }
 
         // ---- Файлы ----
-        attachBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
-
+        attachBtn.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => {
             const files = e.target.files;
             if (!files.length) return;
@@ -1092,144 +1054,111 @@
             fileInput.value = '';
         });
 
-        function sendFile(file) {
+        async function sendFile(file) {
             const id = Date.now() + '-' + Math.random().toString(36).substr(2,6);
             sentIds.add(id);
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const blob = new Blob([ev.target.result], { type:file.type });
-                const url = URL.createObjectURL(blob);
-                const mime = file.type;
-                const name = file.name;
-                displayFileMessage(myName, url, name, mime, true, id);
-                const msg = { text:`[Файл: ${name}]`, sender:myName, time:new Date().toLocaleTimeString(), id, replyTo:null, reactions:null, type:'file' };
-                saveChatMessage(msg);
-                pendingMessages.push({ id, type:'file', data:{file:blob, name, mime}, sender:myName, time:new Date().toLocaleTimeString() });
-                sendFileInternal(blob, name, mime, id);
-            };
-            reader.readAsArrayBuffer(file);
+            const blob = await file.arrayBuffer().then(buf => new Blob([buf], { type: file.type }));
+            const base64 = await blobToBase64(blob);
+            const name = file.name;
+            const mime = file.type;
+            // локально
+            const url = URL.createObjectURL(blob);
+            displayFileMessage(myName, url, name, mime, true, id);
+            const msg = { type:'file', sender:myName, time:new Date().toLocaleTimeString(), id, data:base64, mime, name };
+            saveChatMessage(msg);
+            pendingMessages.push({ id, type:'file', data:{file:blob, name, mime}, sender:myName, time:new Date().toLocaleTimeString() });
+            sendFileInternal(blob, name, mime, id);
         }
 
         function sendFileInternal(blob, name, mime, id, isRetry=false) {
             if (isHost) {
-                broadcastFile(blob, name, mime, myName, id);
+                // Хост рассылает всем клиентам
+                const base64 = blobToBase64(blob);
+                base64.then(b64 => {
+                    Object.values(clients).forEach(c => { if (c.open) c.send({ type:'file', file:blob, name, mime, sender:myName, id, data:b64 }); });
+                });
                 confirmPending(id);
             } else if (myDataConnection && myDataConnection.open) {
-                myDataConnection.send({ type:'file', file:blob, name, mime, sender:myName, id });
+                blobToBase64(blob).then(b64 => {
+                    myDataConnection.send({ type:'file', file:blob, name, mime, sender:myName, id, data:b64 });
+                });
             } else {
                 console.warn('Нет соединения, файл сохранён в pending');
             }
         }
 
-        // ---- Реакции ----
-        function updateReaction(msgId, emoji, sender) {
-            const msgEl = document.querySelector(`[data-msg-id="${msgId}"]`);
-            if (!msgEl) return;
-            let reactions = msgEl.dataset.reactions ? JSON.parse(msgEl.dataset.reactions) : {};
-            if (!reactions[emoji]) reactions[emoji] = [];
-            if (reactions[emoji].includes(sender)) {
-                reactions[emoji] = reactions[emoji].filter(u => u !== sender);
-                if (reactions[emoji].length === 0) delete reactions[emoji];
+        // ---- Голосовые ----
+        let voiceRecorder = null, voiceChunks = [], isRecordingVoice = false, waveElement = null;
+
+        voiceBtn.addEventListener('click', () => {
+            if (isRecordingVoice) {
+                stopVoiceRecording();
+                return;
+            }
+            startVoiceRecording();
+        });
+
+        async function startVoiceRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+                voiceRecorder = new MediaRecorder(stream);
+                voiceChunks = [];
+                voiceRecorder.ondataavailable = (e) => { if (e.data.size>0) voiceChunks.push(e.data); };
+                voiceRecorder.onstop = async () => {
+                    const blob = new Blob(voiceChunks, { type:'audio/ogg' });
+                    voiceChunks = [];
+                    const id = Date.now() + '-' + Math.random().toString(36).substr(2,6);
+                    sentIds.add(id);
+                    const url = URL.createObjectURL(blob);
+                    const duration = Math.round(blob.size / 16000);
+                    const durationStr = `${Math.floor(duration/60)}:${(duration%60).toString().padStart(2,'0')}`;
+                    addChatMessage(durationStr, myName, null, id, null, null, 'voice', true);
+                    const base64 = await blobToBase64(blob);
+                    const msg = { type:'voice', sender:myName, time:new Date().toLocaleTimeString(), id, data:base64, mime:'audio/ogg' };
+                    saveChatMessage(msg);
+                    pendingMessages.push({ id, type:'voice', data:{blob}, sender:myName, time:new Date().toLocaleTimeString() });
+                    sendVoiceInternal(blob, id);
+                    stream.getTracks().forEach(t=>t.stop());
+                    if (waveElement) { waveElement.remove(); waveElement=null; }
+                    voiceBtn.textContent = '🎙️';
+                    voiceBtn.classList.remove('recording');
+                };
+                voiceRecorder.start();
+                isRecordingVoice = true;
+                voiceBtn.textContent = '⏹️';
+                voiceBtn.classList.add('recording');
+                if (!waveElement) {
+                    waveElement = document.createElement('div');
+                    waveElement.className = 'voice-wave';
+                    for (let i=0; i<7; i++) { const s=document.createElement('span'); waveElement.appendChild(s); }
+                    voiceBtn.parentNode.insertBefore(waveElement, voiceBtn.nextSibling);
+                }
+            } catch(e) { alert('Ошибка доступа к микрофону для записи: '+e.message); }
+        }
+
+        function stopVoiceRecording() {
+            if (voiceRecorder && voiceRecorder.state !== 'inactive') {
+                voiceRecorder.stop();
+                isRecordingVoice = false;
+            }
+        }
+
+        function sendVoiceInternal(blob, id, isRetry=false) {
+            if (isHost) {
+                blobToBase64(blob).then(b64 => {
+                    Object.values(clients).forEach(c => { if (c.open) c.send({ type:'voice', file:blob, sender:myName, id, data:b64, mime:'audio/ogg' }); });
+                });
+                confirmPending(id);
+            } else if (myDataConnection && myDataConnection.open) {
+                blobToBase64(blob).then(b64 => {
+                    myDataConnection.send({ type:'voice', file:blob, sender:myName, id, data:b64, mime:'audio/ogg' });
+                });
             } else {
-                reactions[emoji].push(sender);
-            }
-            msgEl.dataset.reactions = JSON.stringify(reactions);
-            const reactionsDiv = msgEl.querySelector('.reactions');
-            if (reactionsDiv) {
-                reactionsDiv.innerHTML = '';
-                for (const [emoji, users] of Object.entries(reactions)) {
-                    const span = document.createElement('span');
-                    span.textContent = `${emoji} ${users.length}`;
-                    reactionsDiv.appendChild(span);
-                }
-            } else {
-                const newDiv = document.createElement('div');
-                newDiv.className = 'reactions';
-                for (const [emoji, users] of Object.entries(reactions)) {
-                    const span = document.createElement('span');
-                    span.textContent = `${emoji} ${users.length}`;
-                    newDiv.appendChild(span);
-                }
-                msgEl.appendChild(newDiv);
+                console.warn('Нет соединения, голосовое сохранено в pending');
             }
         }
 
-        function deleteMessageLocally(msgId) {
-            const el = document.querySelector(`[data-msg-id="${msgId}"]`);
-            if (el) el.remove();
-        }
-
-        // ---- Реплай ----
-        function setReply(id, sender, text) {
-            replyTo = { id, sender, text };
-            replyIndicator.style.display = 'flex';
-            replyText.textContent = `${sender}: ${text}`;
-        }
-
-        function clearReply() {
-            replyTo = null;
-            replyIndicator.style.display = 'none';
-        }
-        cancelReply.addEventListener('click', clearReply);
-
-        // ---- Контекстное меню ----
-        function showContextMenu(x, y, msgId, sender) {
-            selectedMsgId = msgId;
-            contextMenu.style.left = Math.min(x, window.innerWidth - 160) + 'px';
-            contextMenu.style.top = Math.min(y, window.innerHeight - 120) + 'px';
-            contextMenu.classList.add('active');
-            ctxDelete.style.display = (sender === myName) ? 'block' : 'none';
-        }
-        document.addEventListener('click', () => contextMenu.classList.remove('active'));
-        document.addEventListener('contextmenu', (e) => {
-            if (!e.target.closest('.msg')) contextMenu.classList.remove('active');
-        });
-
-        document.querySelectorAll('[data-reaction]').forEach(el => {
-            el.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const emoji = el.dataset.reaction;
-                if (selectedMsgId) {
-                    if (isHost) {
-                        Object.values(clients).forEach(c => { if (c.open) c.send({ type:'reaction', msgId:selectedMsgId, reaction:emoji, sender:myName }); });
-                        updateReaction(selectedMsgId, emoji, myName);
-                    } else if (myDataConnection && myDataConnection.open) {
-                        myDataConnection.send({ type:'reaction', msgId:selectedMsgId, reaction:emoji, sender:myName });
-                    }
-                    contextMenu.classList.remove('active');
-                }
-            });
-        });
-
-        ctxDelete.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (selectedMsgId) {
-                if (isHost) {
-                    Object.values(clients).forEach(c => { if (c.open) c.send({ type:'delete', msgId:selectedMsgId }); });
-                    deleteMessageLocally(selectedMsgId);
-                } else if (myDataConnection && myDataConnection.open) {
-                    myDataConnection.send({ type:'delete', msgId:selectedMsgId });
-                }
-                contextMenu.classList.remove('active');
-            }
-        });
-
-        ctxReply.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (selectedMsgId) {
-                const el = document.querySelector(`[data-msg-id="${selectedMsgId}"]`);
-                if (el) {
-                    const sender = el.dataset.sender;
-                    const content = el.querySelector('.content')?.textContent || '[медиа]';
-                    setReply(selectedMsgId, sender, content);
-                }
-                contextMenu.classList.remove('active');
-            }
-        });
-
-        // =================================================================
-        // 11. КРУЖКИ
-        // =================================================================
+        // ---- Кружки (видеосообщения) ----
         videoMsgBtn.addEventListener('click', () => {
             if (isRecording) return;
             openRecorder();
@@ -1274,13 +1203,14 @@
                 recordedChunks = [];
                 recorder = new MediaRecorder(recStream);
                 recorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
-                recorder.onstop = () => {
+                recorder.onstop = async () => {
                     const blob = new Blob(recordedChunks, { type: 'video/mp4' });
                     const id = Date.now() + '-' + Math.random().toString(36).substr(2,6);
                     sentIds.add(id);
                     const url = URL.createObjectURL(blob);
                     addChatMessage(url, myName, null, id, null, null, 'videoMsg', true);
-                    const msg = { text:url, sender:myName, time:new Date().toLocaleTimeString(), id, replyTo:null, reactions:null, type:'videoMsg' };
+                    const base64 = await blobToBase64(blob);
+                    const msg = { type:'videoMsg', sender:myName, time:new Date().toLocaleTimeString(), id, data:base64, mime:'video/mp4' };
                     saveChatMessage(msg);
                     pendingMessages.push({ id, type:'videoMsg', data:{blob}, sender:myName, time:new Date().toLocaleTimeString() });
                     sendVideoMsgInternal(blob, id);
@@ -1344,90 +1274,129 @@
             recStartBtn.classList.remove('recording');
         }
 
-        // =================================================================
-        // 12. ГОЛОСОВЫЕ
-        // =================================================================
-        let voiceRecorder = null, voiceChunks = [], isRecordingVoice = false, waveElement = null;
-
-        voiceBtn.addEventListener('click', () => {
-            if (isRecordingVoice) {
-                stopVoiceRecording();
-                return;
-            }
-            startVoiceRecording();
-        });
-
-        async function startVoiceRecording() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
-                voiceRecorder = new MediaRecorder(stream);
-                voiceChunks = [];
-                voiceRecorder.ondataavailable = (e) => { if (e.data.size>0) voiceChunks.push(e.data); };
-                voiceRecorder.onstop = () => {
-                    const blob = new Blob(voiceChunks, { type:'audio/ogg' });
-                    voiceChunks = [];
-                    const id = Date.now() + '-' + Math.random().toString(36).substr(2,6);
-                    sentIds.add(id);
-                    const url = URL.createObjectURL(blob);
-                    const duration = Math.round(blob.size / 16000);
-                    const durationStr = `${Math.floor(duration/60)}:${(duration%60).toString().padStart(2,'0')}`;
-                    addChatMessage(durationStr, myName, null, id, null, null, 'voice', true);
-                    const msg = { text:durationStr, sender:myName, time:new Date().toLocaleTimeString(), id, replyTo:null, reactions:null, type:'voice' };
-                    saveChatMessage(msg);
-                    pendingMessages.push({ id, type:'voice', data:{blob}, sender:myName, time:new Date().toLocaleTimeString() });
-                    sendVoiceInternal(blob, id);
-                    stream.getTracks().forEach(t=>t.stop());
-                    if (waveElement) { waveElement.remove(); waveElement=null; }
-                    voiceBtn.textContent = '🎙️';
-                    voiceBtn.classList.remove('recording');
-                };
-                voiceRecorder.start();
-                isRecordingVoice = true;
-                voiceBtn.textContent = '⏹️';
-                voiceBtn.classList.add('recording');
-                if (!waveElement) {
-                    waveElement = document.createElement('div');
-                    waveElement.className = 'voice-wave';
-                    for (let i=0; i<7; i++) { const s=document.createElement('span'); waveElement.appendChild(s); }
-                    voiceBtn.parentNode.insertBefore(waveElement, voiceBtn.nextSibling);
-                }
-            } catch(e) { alert('Ошибка доступа к микрофону для записи: '+e.message); }
-        }
-
-        function stopVoiceRecording() {
-            if (voiceRecorder && voiceRecorder.state !== 'inactive') {
-                voiceRecorder.stop();
-                isRecordingVoice = false;
-            }
-        }
-
-        function sendVoiceInternal(blob, id, isRetry=false) {
-            if (isHost) {
-                broadcastVoice(blob, myName, id);
-                confirmPending(id);
-            } else if (myDataConnection && myDataConnection.open) {
-                myDataConnection.send({ type:'voice', file:blob, sender:myName, id });
-            } else {
-                console.warn('Нет соединения, голосовое сохранено в pending');
-            }
-        }
-
-        // =================================================================
-        // 13. ОТПРАВКА КРУЖКОВ
-        // =================================================================
         function sendVideoMsgInternal(blob, id, isRetry=false) {
             if (isHost) {
-                broadcastVideoMsg(blob, myName, id);
+                blobToBase64(blob).then(b64 => {
+                    Object.values(clients).forEach(c => { if (c.open) c.send({ type:'videoMsg', file:blob, sender:myName, id, data:b64, mime:'video/mp4' }); });
+                });
                 confirmPending(id);
             } else if (myDataConnection && myDataConnection.open) {
-                myDataConnection.send({ type:'videoMsg', file:blob, sender:myName, id });
+                blobToBase64(blob).then(b64 => {
+                    myDataConnection.send({ type:'videoMsg', file:blob, sender:myName, id, data:b64, mime:'video/mp4' });
+                });
             } else {
                 console.warn('Нет соединения, кружок сохранён в pending');
             }
         }
 
         // =================================================================
-        // 14. НАВИГАЦИЯ
+        // 12. РЕАКЦИИ, РЕПЛАЙ, УДАЛЕНИЕ
+        // =================================================================
+        function updateReaction(msgId, emoji, sender) {
+            const msgEl = document.querySelector(`[data-msg-id="${msgId}"]`);
+            if (!msgEl) return;
+            let reactions = msgEl.dataset.reactions ? JSON.parse(msgEl.dataset.reactions) : {};
+            if (!reactions[emoji]) reactions[emoji] = [];
+            if (reactions[emoji].includes(sender)) {
+                reactions[emoji] = reactions[emoji].filter(u => u !== sender);
+                if (reactions[emoji].length === 0) delete reactions[emoji];
+            } else {
+                reactions[emoji].push(sender);
+            }
+            msgEl.dataset.reactions = JSON.stringify(reactions);
+            const reactionsDiv = msgEl.querySelector('.reactions');
+            if (reactionsDiv) {
+                reactionsDiv.innerHTML = '';
+                for (const [emoji, users] of Object.entries(reactions)) {
+                    const span = document.createElement('span');
+                    span.textContent = `${emoji} ${users.length}`;
+                    reactionsDiv.appendChild(span);
+                }
+            } else {
+                const newDiv = document.createElement('div');
+                newDiv.className = 'reactions';
+                for (const [emoji, users] of Object.entries(reactions)) {
+                    const span = document.createElement('span');
+                    span.textContent = `${emoji} ${users.length}`;
+                    newDiv.appendChild(span);
+                }
+                msgEl.appendChild(newDiv);
+            }
+        }
+
+        function deleteMessageLocally(msgId) {
+            const el = document.querySelector(`[data-msg-id="${msgId}"]`);
+            if (el) el.remove();
+        }
+
+        function setReply(id, sender, text) {
+            replyTo = { id, sender, text };
+            replyIndicator.style.display = 'flex';
+            replyText.textContent = `${sender}: ${text}`;
+        }
+
+        function clearReply() {
+            replyTo = null;
+            replyIndicator.style.display = 'none';
+        }
+        cancelReply.addEventListener('click', clearReply);
+
+        function showContextMenu(x, y, msgId, sender) {
+            selectedMsgId = msgId;
+            contextMenu.style.left = Math.min(x, window.innerWidth - 160) + 'px';
+            contextMenu.style.top = Math.min(y, window.innerHeight - 120) + 'px';
+            contextMenu.classList.add('active');
+            ctxDelete.style.display = (sender === myName) ? 'block' : 'none';
+        }
+        document.addEventListener('click', () => contextMenu.classList.remove('active'));
+        document.addEventListener('contextmenu', (e) => {
+            if (!e.target.closest('.msg')) contextMenu.classList.remove('active');
+        });
+
+        document.querySelectorAll('[data-reaction]').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const emoji = el.dataset.reaction;
+                if (selectedMsgId) {
+                    if (isHost) {
+                        Object.values(clients).forEach(c => { if (c.open) c.send({ type:'reaction', msgId:selectedMsgId, reaction:emoji, sender:myName }); });
+                        updateReaction(selectedMsgId, emoji, myName);
+                    } else if (myDataConnection && myDataConnection.open) {
+                        myDataConnection.send({ type:'reaction', msgId:selectedMsgId, reaction:emoji, sender:myName });
+                    }
+                    contextMenu.classList.remove('active');
+                }
+            });
+        });
+
+        ctxDelete.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (selectedMsgId) {
+                if (isHost) {
+                    Object.values(clients).forEach(c => { if (c.open) c.send({ type:'delete', msgId:selectedMsgId }); });
+                    deleteMessageLocally(selectedMsgId);
+                } else if (myDataConnection && myDataConnection.open) {
+                    myDataConnection.send({ type:'delete', msgId:selectedMsgId });
+                }
+                contextMenu.classList.remove('active');
+            }
+        });
+
+        ctxReply.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (selectedMsgId) {
+                const el = document.querySelector(`[data-msg-id="${selectedMsgId}"]`);
+                if (el) {
+                    const sender = el.dataset.sender;
+                    const content = el.querySelector('.content')?.textContent || '[медиа]';
+                    setReply(selectedMsgId, sender, content);
+                }
+                contextMenu.classList.remove('active');
+            }
+        });
+
+        // =================================================================
+        // 13. НАВИГАЦИЯ
         // =================================================================
         navItems.forEach(item => {
             item.addEventListener('click', () => {
@@ -1439,7 +1408,7 @@
         });
 
         // =================================================================
-        // 15. АУДИО-ПЛЕЕР
+        // 14. АУДИО-ПЛЕЕР
         // =================================================================
         function openAudioPlayer(audioElement) {
             currentAudio = audioElement;
@@ -1480,7 +1449,7 @@
         }, true);
 
         // =================================================================
-        // 16. МАСШТАБ И ТЕМА (привязаны к элементам)
+        // 15. МАСШТАБ И ТЕМА
         // =================================================================
         function applyZoom(value) {
             const percent = parseInt(value);
@@ -1508,7 +1477,7 @@
         });
 
         // =================================================================
-        // 17. ИНИЦИАЛИЗАЦИЯ
+        // 16. ИНИЦИАЛИЗАЦИЯ
         // =================================================================
         function init() {
             if (!localStorage.getItem('userChoice')) {
@@ -1520,12 +1489,11 @@
                     else initConnection();
                 });
             }
-            loadSettings(); // еще раз для синхронизации
+            loadSettings();
             statusEl.textContent = '❌ Не подключено';
             statusEl.className = 'status offline';
         }
 
-        // Привязываем отправку сообщений
         chatSendBtn.addEventListener('click', sendTextMessage);
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') sendTextMessage();
@@ -1540,25 +1508,19 @@
             if (reconnectTimer) clearTimeout(reconnectTimer);
         });
 
-        // Дополнительно: обновляем radio при загрузке, если выбран пользователь
+        // Синхронизация радио-кнопок
         const saved = localStorage.getItem('userChoice');
         if (saved) {
-            document.querySelectorAll('input[name="userChoice"]').forEach(r => {
-                r.checked = (r.value === saved);
-            });
+            userRadios.forEach(r => r.checked = (r.value === saved));
         }
-
-        // Обработчики для радио-кнопок в настройках
         userRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    setUser(e.target.value);
-                }
+                if (e.target.checked) setUser(e.target.value);
             });
         });
 
         init();
-        console.log('манго арбузник – полностью рабочий, все функции восстановлены!');
+        console.log('манго арбузник – финальная версия, всё работает!');
     </script>
 </body>
 </html>
