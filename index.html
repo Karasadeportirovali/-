@@ -6,17 +6,20 @@
     <title>манго арбузник</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
+        /* ===== ГЛОБАЛЬНЫЕ СТИЛИ С АНИМАЦИЯМИ ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg: #0a0a0a; --bg2: #141414; --bg3: #1c1c1c; --bg4: #252525; --bg5: #2e2e2e;
             --br: #3a3a3a; --txt: #f0f0f0; --txt2: #b0b0b0; --txt3: #777;
             --ac: #d0d0d0; --ach: #aaa; --sh: 0 2px 10px rgba(0,0,0,.6);
             --msg-other-bg: #1a2a3a;
+            --chat-bg: #0a0a0a;
         }
-        .light { --bg: #f5f5f5; --bg2: #e8e8e8; --bg3: #d8d8d8; --bg4: #d0d0d0; --bg5: #c0c0c0; --br: #b0b0b0; --txt: #1a1a1a; --txt2: #444; --txt3: #777; --ac: #222; --ach: #555; --sh: 0 2px 10px rgba(0,0,0,.15); --msg-other-bg: #d0e0f0; }
+        .light { --bg: #f5f5f5; --bg2: #e8e8e8; --bg3: #d8d8d8; --bg4: #d0d0d0; --bg5: #c0c0c0; --br: #b0b0b0; --txt: #1a1a1a; --txt2: #444; --txt3: #777; --ac: #222; --ach: #555; --sh: 0 2px 10px rgba(0,0,0,.15); --msg-other-bg: #d0e0f0; --chat-bg: #f5f5f5; }
         body { background: var(--bg); color: var(--txt); font-family: 'Segoe UI', Roboto, sans-serif; height: 100vh; display: flex; overflow: hidden; }
         .sidebar { width: 60px; background: var(--bg2); display: flex; flex-direction: column; align-items: center; padding-top: 16px; border-right: 1px solid var(--br); flex-shrink: 0; z-index: 10; }
-        .sidebar .logo { font-size: 18px; font-weight: 900; color: var(--ac); margin-bottom: 20px; writing-mode: vertical-lr; letter-spacing: 4px; }
+        .sidebar .logo { font-size: 18px; font-weight: 900; color: var(--ac); margin-bottom: 20px; writing-mode: vertical-lr; letter-spacing: 4px; animation: pulse-logo 2s infinite; }
+        @keyframes pulse-logo { 0% { opacity: 0.7; transform: scale(0.98); } 50% { opacity: 1; transform: scale(1.02); } 100% { opacity: 0.7; transform: scale(0.98); } }
         .sidebar .nav-item { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 14px; margin-bottom: 8px; cursor: pointer; transition: .2s; color: var(--txt2); font-size: 20px; background: 0 0; border: none; }
         .sidebar .nav-item:hover { background: var(--bg3); color: var(--txt); }
         .sidebar .nav-item.active { background: var(--ac); color: var(--bg); box-shadow: var(--sh); }
@@ -25,11 +28,13 @@
         .topbar { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; background: var(--bg2); border-bottom: 1px solid var(--br); flex-shrink: 0; flex-wrap: wrap; gap: 4px; }
         .topbar .title { font-size: 16px; font-weight: 700; color: var(--ac); letter-spacing: 1px; }
         .topbar .datetime { font-size: 11px; color: var(--txt2); background: var(--bg3); padding: 2px 10px; border-radius: 20px; border: 1px solid var(--br); white-space: nowrap; }
-        .topbar .status { font-size: 11px; color: var(--txt2); background: var(--bg3); padding: 2px 10px; border-radius: 20px; border: 1px solid var(--br); white-space: nowrap; }
+        .topbar .status { font-size: 11px; color: var(--txt2); background: var(--bg3); padding: 2px 10px; border-radius: 20px; border: 1px solid var(--br); white-space: nowrap; display: flex; align-items: center; gap: 4px; }
         .topbar .status.online { color: #5a5; border-color: #5a5; }
         .topbar .status.offline { color: #a55; border-color: #a55; }
         .topbar .status.connected { color: #aa5; border-color: #aa5; }
         .topbar .status.retry { color: #fa0; border-color: #fa0; }
+        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #5a5; animation: pulse-dot 1.5s infinite; }
+        @keyframes pulse-dot { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
         .content { flex: 1; display: flex; overflow: hidden; position: relative; }
         .tab { display: none; width: 100%; height: 100%; flex-direction: column; padding: 12px; overflow-y: auto; }
         .tab.active { display: flex; }
@@ -44,11 +49,11 @@
         .controls-room button:hover { background: var(--br); }
         .controls-room .active { background: var(--ac); color: var(--bg); border-color: var(--ac); }
         .controls-room .danger { background: #a55; color: #fff; border-color: #a55; }
-        .chat-messages { flex: 1; overflow-y: auto; padding: 6px 8px; background: var(--bg3); border-radius: 16px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--br); }
-        .chat-messages .msg { max-width: 85%; padding: 6px 12px; border-radius: 14px; align-self: flex-start; word-wrap: break-word; position: relative; animation: msgIn .2s ease; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 6px 8px; background: var(--chat-bg); border-radius: 16px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--br); transition: background .3s; }
+        .chat-messages .msg { max-width: 85%; padding: 6px 12px; border-radius: 14px; align-self: flex-start; word-wrap: break-word; position: relative; animation: msgSlide .3s ease; }
         .chat-messages .msg.me { align-self: flex-end; background: var(--bg5); border: 1px solid var(--br); }
         .chat-messages .msg.other { align-self: flex-start; background: var(--msg-other-bg); border: 1px solid var(--br); }
-        @keyframes msgIn { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes msgSlide { 0% { opacity: 0; transform: translateY(10px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
         .chat-messages .msg .sender { font-size: 11px; color: var(--txt2); margin-bottom: 2px; font-weight: 600; }
         .chat-messages .msg .time { font-size: 9px; color: var(--txt3); margin-left: 6px; }
         .chat-messages .msg .reply-to { font-size: 11px; color: var(--ac); background: var(--bg3); padding: 2px 8px; border-radius: 8px; margin-bottom: 3px; border-left: 3px solid var(--ac); }
@@ -61,11 +66,17 @@
         .chat-messages .msg .audio-preview .duration { font-size: 12px; color: var(--txt2); }
         .chat-messages .msg .reactions { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
         .chat-messages .msg .reactions span { background: var(--bg3); padding: 0 6px; border-radius: 12px; font-size: 13px; cursor: pointer; transition: .1s; }
-        .chat-messages .msg .reactions span:hover { transform: scale(1.1); }
+        .chat-messages .msg .reactions span:hover { transform: scale(1.2); }
         .pending-indicator { color: #f44; font-weight: 700; margin-left: 4px; font-size: 14px; display: inline-block; animation: blink 1s infinite; }
         @keyframes blink { 0%{opacity:1} 50%{opacity:.3} 100%{opacity:1} }
+        .typing-indicator { display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--bg3); border-radius: 20px; align-self: flex-start; margin-bottom: 4px; animation: msgSlide .3s ease; }
+        .typing-indicator span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--txt2); animation: typing-bounce 1.4s infinite; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
         .chat-input-area { display: flex; gap: 6px; align-items: center; flex-shrink: 0; background: var(--bg2); padding: 6px 10px; border-radius: 40px; border: 1px solid var(--br); }
         .chat-input-area input[type="text"] { flex: 1; background: 0 0; border: 0; color: var(--txt); font-size: 14px; outline: 0; padding: 6px 0; }
+        .chat-input-area input[type="text"]:focus + .typing-trigger { /* не используется */ }
         .chat-input-area button { background: 0 0; border: 0; color: var(--txt2); font-size: 18px; cursor: pointer; padding: 4px 6px; transition: .2s; position: relative; }
         .chat-input-area button:hover { color: var(--txt); }
         .chat-input-area button.primary { color: var(--ac); font-size: 20px; }
@@ -94,6 +105,14 @@
         .btn-default:hover { background: var(--br); }
         .theme-toggle { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
         .theme-toggle input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--ac); cursor: pointer; }
+        .bg-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+        .bg-selector button { padding: 4px 12px; border-radius: 20px; border: 1px solid var(--br); background: var(--bg3); color: var(--txt); cursor: pointer; font-size: 12px; transition: .15s; }
+        .bg-selector button:hover { background: var(--br); }
+        .bg-selector button.active-bg { border-color: var(--ac); background: var(--ac); color: var(--bg); }
+        .color-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+        .color-picker input[type="color"] { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--br); cursor: pointer; padding: 0; background: none; }
+        .color-picker input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-picker input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
         .sticker-upload { margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .sticker-upload label { background: var(--bg3); padding: 6px 14px; border-radius: 30px; border: 1px solid var(--br); cursor: pointer; font-size: 13px; transition: .15s; }
         .sticker-upload label:hover { background: var(--br); }
@@ -224,6 +243,10 @@
             <div class="tab" id="chatTab">
                 <div class="chat-tab" style="display:flex;flex-direction:column;height:100%">
                     <div class="chat-messages" id="chatMessages"></div>
+                    <div id="typingIndicator" class="typing-indicator" style="display:none;">
+                        <span></span><span></span><span></span>
+                        <span style="font-size:12px; color:var(--txt2); margin-left:4px;">печатает...</span>
+                    </div>
                     <div id="replyIndicator" class="reply-indicator" style="display:none;">
                         <span>Ответ на: <span id="replyText"></span></span>
                         <span class="cancel-reply" id="cancelReply">✕</span>
@@ -267,6 +290,22 @@
                         </div>
                     </div>
                     <div class="setting-group">
+                        <label>🎨 Цвет ника</label>
+                        <div class="color-picker">
+                            <input type="color" id="myColorPicker" value="#ff00c8">
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label>🖼️ Фон чата</label>
+                        <div class="bg-selector">
+                            <button data-bg="#0a0a0a" class="active-bg">Тёмный</button>
+                            <button data-bg="#f5f5f5">Светлый</button>
+                            <button data-bg="linear-gradient(45deg, #1a0a2e, #2d1b4e)">Космос</button>
+                            <button data-bg="linear-gradient(45deg, #0b3d0b, #1a6b1a)">Лес</button>
+                            <button data-bg="linear-gradient(45deg, #0a2a4a, #1a5a7a)">Океан</button>
+                        </div>
+                    </div>
+                    <div class="setting-group">
                         <label>📦 Стикеры</label>
                         <div class="sticker-upload">
                             <label for="stickerUpload">➕ Загрузить стикер</label>
@@ -300,7 +339,7 @@
 
     <script>
         // =================================================================
-        // 0. ПЕРЕМЕННЫЕ И ССЫЛКИ
+        // 0. ПЕРЕМЕННЫЕ
         // =================================================================
         const localVideo = document.getElementById('localVideo');
         const remoteVideo = document.getElementById('remoteVideo');
@@ -318,6 +357,7 @@
         const stickerPanel = document.getElementById('stickerPanel');
         const stickerUpload = document.getElementById('stickerUpload');
         const stickerPreview = document.getElementById('stickerPreview');
+        const typingIndicator = document.getElementById('typingIndicator');
         const userRadios = document.querySelectorAll('input[name="userChoice"]');
         const zoomSlider = document.getElementById('zoomSlider');
         const zoomValue = document.getElementById('zoomValue');
@@ -353,8 +393,11 @@
         const contextMenu = document.getElementById('contextMenu');
         const ctxDelete = document.getElementById('ctxDelete');
         const ctxReply = document.getElementById('ctxReply');
+        const myColorPicker = document.getElementById('myColorPicker');
+        const bgButtons = document.querySelectorAll('.bg-selector button');
 
         let myName = 'Карасик';
+        let myColor = '#ff00c8';
         let localStream = null, peer = null, currentCall = null, isConnected = false, isScreenSharing = false, screenStream = null;
         let isHost = false, clients = {}, myDataConnection = null;
         const ROOM_ID = 'mango_chat';
@@ -363,25 +406,24 @@
         let currentAudio = null;
         let isRecording = false, recorder = null, recordedChunks = [], recStream = null, recTimerInterval = null, recSeconds = 0, facingMode = 'user', flashActive = false, mediaStream = null;
         let replyTo = null, selectedMsgId = null;
+        let typingTimeout = null;
 
         // =================================================================
-        // 1. РАБОТА С LOCALSTORAGE (стикеры)
+        // 1. РАБОТА С LOCALSTORAGE
         // =================================================================
         const STICKERS_KEY = 'mango_stickers';
+        const MY_COLOR_KEY = 'mango_mycolor';
+        const BG_KEY = 'mango_chatbg';
 
         function getStickers() {
-            try {
-                const data = localStorage.getItem(STICKERS_KEY);
-                return data ? JSON.parse(data) : [];
-            } catch { return []; }
+            try { return JSON.parse(localStorage.getItem(STICKERS_KEY)) || []; } catch { return []; }
         }
-
-        function saveStickers(stickers) {
-            localStorage.setItem(STICKERS_KEY, JSON.stringify(stickers));
-        }
+        function saveStickers(stickers) { localStorage.setItem(STICKERS_KEY, JSON.stringify(stickers)); }
+        function getMyColor() { return localStorage.getItem(MY_COLOR_KEY) || '#ff00c8'; }
+        function getChatBg() { return localStorage.getItem(BG_KEY) || '#0a0a0a'; }
 
         // =================================================================
-        // 2. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (BASE64)
+        // 2. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
         // =================================================================
         function blobToBase64(blob) {
             return new Promise((resolve) => {
@@ -396,6 +438,27 @@
             const ia = new Uint8Array(ab);
             for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
             return new Blob([ab], { type: mime });
+        }
+        function playSound(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                gain.gain.value = 0.05;
+                if (type === 'send') {
+                    osc.frequency.value = 600;
+                    osc.type = 'sine';
+                    osc.start(ctx.currentTime);
+                    osc.stop(ctx.currentTime + 0.08);
+                } else if (type === 'receive') {
+                    osc.frequency.value = 800;
+                    osc.type = 'sine';
+                    osc.start(ctx.currentTime);
+                    osc.stop(ctx.currentTime + 0.12);
+                }
+            } catch(e) { /* звуки не критичны */ }
         }
 
         // =================================================================
@@ -412,7 +475,7 @@
         });
 
         // =================================================================
-        // 4. НАСТРОЙКИ И ИСТОРИЯ
+        // 4. НАСТРОЙКИ
         // =================================================================
         function loadSettings() {
             const savedUser = localStorage.getItem('userChoice');
@@ -423,8 +486,16 @@
             if (savedZoom) { const val = parseInt(savedZoom); zoomSlider.value = val; applyZoom(val); } else applyZoom(100);
             const savedTheme = localStorage.getItem('lightTheme') === 'true';
             lightThemeToggle.checked = savedTheme; applyTheme(savedTheme);
+            myColor = getMyColor();
+            myColorPicker.value = myColor;
+            const bg = getChatBg();
+            document.querySelector('.chat-messages').style.background = bg;
+            bgButtons.forEach(btn => {
+                btn.classList.toggle('active-bg', btn.dataset.bg === bg);
+            });
             loadChatHistoryForUser(myName);
             renderStickers();
+            renderStickerPreview();
         }
 
         function setUser(choice) {
@@ -494,7 +565,7 @@
         }
 
         // =================================================================
-        // 7. ПОДКЛЮЧЕНИЕ (сокращённо, как в прошлой версии)
+        // 7. ПОДКЛЮЧЕНИЕ (сокращённо, с онлайн-статусом)
         // =================================================================
         function initConnection() {
             if (isConnecting) return;
@@ -610,6 +681,8 @@
                         else if (data.type === 'videoMsg') displayVideoMessage(data.sender, url, false, data.id);
                     }
                     if (data.id) conn.send({ type:'ack', id:data.id });
+                } else if (data.type === 'typing') {
+                    showTyping(data.sender);
                 } else if (data.type === 'reaction') {
                     Object.values(clients).forEach(c => { if (c.open) c.send({ type:'reaction', msgId:data.msgId, reaction:data.reaction, sender:data.sender }); });
                     updateReaction(data.msgId, data.reaction, data.sender);
@@ -632,6 +705,7 @@
                 const msgToSave = { text, sender, time:timeStr, id, replyTo, reactions, type:type||'text' };
                 saveChatMessage(msgToSave);
                 addChatMessage(text, sender, timeStr, id, replyTo, reactions, type||'text', false);
+                playSound('receive');
             }
         }
 
@@ -650,17 +724,19 @@
             const isMe = (data.sender === myName);
             if (data.type === 'chat') {
                 addChatMessage(data.text, data.sender, data.time, data.id, data.replyTo, data.reactions, data.type, isMe);
-                if (!isMe) { const msg = { text:data.text, sender:data.sender, time:data.time, id:data.id, replyTo:data.replyTo, reactions:data.reactions, type:data.type }; saveChatMessage(msg); }
+                if (!isMe) { const msg = { text:data.text, sender:data.sender, time:data.time, id:data.id, replyTo:data.replyTo, reactions:data.reactions, type:data.type }; saveChatMessage(msg); playSound('receive'); }
             } else if (data.type === 'sticker') {
-                if (!isMe) { const msg = { type:'sticker', data:data.data, sender:data.sender, time:data.time, id:data.id }; saveChatMessage(msg); }
+                if (!isMe) { const msg = { type:'sticker', data:data.data, sender:data.sender, time:data.time, id:data.id }; saveChatMessage(msg); playSound('receive'); }
                 displayStickerMessage(data.sender, data.data, isMe, data.id);
             } else if (data.type === 'file' || data.type === 'voice' || data.type === 'videoMsg') {
-                if (!isMe) { const msg = { type:data.type, sender:data.sender, time:data.time, id:data.id, data:data.data, mime:data.mime, name:data.name }; saveChatMessage(msg); }
+                if (!isMe) { const msg = { type:data.type, sender:data.sender, time:data.time, id:data.id, data:data.data, mime:data.mime, name:data.name }; saveChatMessage(msg); playSound('receive'); }
                 const blob = base64ToBlob(data.data, data.mime);
                 const url = URL.createObjectURL(blob);
                 if (data.type === 'file') displayFileMessage(data.sender, url, data.name, data.mime, isMe, data.id);
                 else if (data.type === 'voice') displayAudioMessage(data.sender, url, isMe, data.id);
                 else if (data.type === 'videoMsg') displayVideoMessage(data.sender, url, isMe, data.id);
+            } else if (data.type === 'typing') {
+                showTyping(data.sender);
             } else if (data.type === 'reaction') { updateReaction(data.msgId, data.reaction, data.sender); }
             else if (data.type === 'delete') { deleteMessageLocally(data.msgId); }
         }
@@ -698,7 +774,7 @@
         }
 
         // =================================================================
-        // 9. УПРАВЛЕНИЕ КОМНАТОЙ (сокращённо)
+        // 9. УПРАВЛЕНИЕ КОМНАТОЙ
         // =================================================================
         camBtn.addEventListener('click', ()=>{
             if (!localStream) return;
@@ -866,6 +942,7 @@
             pendingMessages.push({ id, type:'sticker', data:{emoji:base64}, sender:myName, time:new Date().toLocaleTimeString() });
             sendStickerInternal(base64, id);
             stickerPanel.classList.remove('active');
+            playSound('send');
         }
 
         function sendStickerInternal(base64, id, isRetry=false) {
@@ -902,7 +979,7 @@
         document.addEventListener('click', () => stickerPanel.classList.remove('active'));
 
         // =================================================================
-        // 11. ЧАТ – ОТОБРАЖЕНИЕ
+        // 11. ЧАТ – ОТОБРАЖЕНИЕ С ЦВЕТОМ
         // =================================================================
         function addChatMessage(text, sender, time, id, replyTo, reactions, type, isMe) {
             const div = document.createElement('div');
@@ -922,7 +999,8 @@
                 for (const [emoji, users] of Object.entries(reactions)) reactionsHtml += `<span>${emoji} ${users.length}</span>`;
                 reactionsHtml += `</div>`;
             }
-            div.innerHTML = `<div class="sender">${sender} <span class="time">${time || new Date().toLocaleTimeString()}</span></div>${replyHtml}${contentHtml}${reactionsHtml}`;
+            const senderColor = (sender === myName) ? myColor : '#ffcc00';
+            div.innerHTML = `<div class="sender" style="color:${senderColor}">${sender} <span class="time" style="color:var(--txt3)">${time || new Date().toLocaleTimeString()}</span></div>${replyHtml}${contentHtml}${reactionsHtml}`;
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             if (type === 'voice') {
@@ -952,7 +1030,8 @@
             else if (mime.startsWith('video/')) content = `<video controls src="${url}" style="max-width:180px;border-radius:10px;"></video>`;
             else if (mime.startsWith('audio/')) content = `<audio src="${url}" style="max-width:180px;"></audio>`;
             else content = `<span class="file-name">📎 ${name}</span>`;
-            div.innerHTML = `<div class="sender">${sender} <span class="time">${time}</span></div>${content}`;
+            const senderColor = (sender === myName) ? myColor : '#ffcc00';
+            div.innerHTML = `<div class="sender" style="color:${senderColor}">${sender} <span class="time" style="color:var(--txt3)">${time}</span></div>${content}`;
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             addMessageInteractions(div, id, sender);
@@ -965,7 +1044,8 @@
             else div.classList.add('other');
             div.dataset.msgId = id; div.dataset.sender = sender;
             const time = new Date().toLocaleTimeString();
-            div.innerHTML = `<div class="sender">${sender} <span class="time">${time}</span></div><audio controls src="${url}" style="max-width:180px;"></audio>`;
+            const senderColor = (sender === myName) ? myColor : '#ffcc00';
+            div.innerHTML = `<div class="sender" style="color:${senderColor}">${sender} <span class="time" style="color:var(--txt3)">${time}</span></div><audio controls src="${url}" style="max-width:180px;"></audio>`;
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             addMessageInteractions(div, id, sender);
@@ -978,7 +1058,8 @@
             else div.classList.add('other');
             div.dataset.msgId = id; div.dataset.sender = sender;
             const time = new Date().toLocaleTimeString();
-            div.innerHTML = `<div class="sender">${sender} <span class="time">${time}</span></div><video class="circle-video" src="${url}" controls></video>`;
+            const senderColor = (sender === myName) ? myColor : '#ffcc00';
+            div.innerHTML = `<div class="sender" style="color:${senderColor}">${sender} <span class="time" style="color:var(--txt3)">${time}</span></div><video class="circle-video" src="${url}" controls></video>`;
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             addMessageInteractions(div, id, sender);
@@ -1004,7 +1085,33 @@
         }
 
         // =================================================================
-        // 12. ОТПРАВКА СООБЩЕНИЙ (текст, файлы, голос, кружки)
+        // 12. ИНДИКАТОР «ПЕЧАТАЕТ»
+        // =================================================================
+        let typingTimeout = null;
+        let isTypingVisible = false;
+
+        function showTyping(sender) {
+            if (sender === myName) return;
+            typingIndicator.style.display = 'flex';
+            isTypingVisible = true;
+            if (typingTimeout) clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                typingIndicator.style.display = 'none';
+                isTypingVisible = false;
+            }, 3000);
+        }
+
+        chatInput.addEventListener('input', () => {
+            if (myDataConnection && myDataConnection.open) {
+                myDataConnection.send({ type: 'typing', sender: myName });
+            }
+            if (isHost) {
+                Object.values(clients).forEach(c => { if (c.open) c.send({ type: 'typing', sender: myName }); });
+            }
+        });
+
+        // =================================================================
+        // 13. ОТПРАВКА СООБЩЕНИЙ
         // =================================================================
         function sendTextMessage() {
             const text = chatInput.value.trim();
@@ -1018,6 +1125,7 @@
             sendChatMessageInternal(text, id, false, replyTo);
             chatInput.value = '';
             clearReply();
+            playSound('send');
         }
         function sendChatMessageInternal(text, id, isRetry=false, replyToParam=null) {
             const reply = replyToParam || replyTo;
@@ -1046,6 +1154,7 @@
             saveChatMessage(msg);
             pendingMessages.push({ id, type:'file', data:{file:blob, name, mime}, sender:myName, time:new Date().toLocaleTimeString() });
             sendFileInternal(blob, name, mime, id);
+            playSound('send');
         }
         function sendFileInternal(blob, name, mime, id, isRetry=false) {
             if (isHost) {
@@ -1086,6 +1195,7 @@
                     if (waveElement) { waveElement.remove(); waveElement=null; }
                     voiceBtn.textContent = '🎙️';
                     voiceBtn.classList.remove('recording');
+                    playSound('send');
                 };
                 voiceRecorder.start();
                 isRecordingVoice = true;
@@ -1155,6 +1265,7 @@
                 pendingMessages.push({ id, type:'videoMsg', data:{blob}, sender:myName, time:new Date().toLocaleTimeString() });
                 sendVideoMsgInternal(blob, id);
                 closeRecorder();
+                playSound('send');
             };
             recorder.start(100);
             isRecording = true;
@@ -1206,7 +1317,7 @@
         }
 
         // =================================================================
-        // 13. РЕАКЦИИ, РЕПЛАЙ, УДАЛЕНИЕ
+        // 14. РЕАКЦИИ, РЕПЛАЙ, УДАЛЕНИЕ
         // =================================================================
         function updateReaction(msgId, emoji, sender) {
             const msgEl = document.querySelector(`[data-msg-id="${msgId}"]`);
@@ -1298,7 +1409,7 @@
         });
 
         // =================================================================
-        // 14. НАВИГАЦИЯ, МАСШТАБ, ТЕМА
+        // 15. НАВИГАЦИЯ, МАСШТАБ, ТЕМА, ФОН, ЦВЕТ
         // =================================================================
         navItems.forEach(item => {
             item.addEventListener('click', () => {
@@ -1322,8 +1433,25 @@
         }
         lightThemeToggle.addEventListener('change', (e) => applyTheme(e.target.checked));
 
+        myColorPicker.addEventListener('input', (e) => {
+            myColor = e.target.value;
+            localStorage.setItem(MY_COLOR_KEY, myColor);
+            // Перерисовываем свои сообщения с новым цветом (можно обновить все)
+            document.querySelectorAll('.msg.me .sender').forEach(el => el.style.color = myColor);
+        });
+
+        bgButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const bg = btn.dataset.bg;
+                document.querySelector('.chat-messages').style.background = bg;
+                localStorage.setItem(BG_KEY, bg);
+                bgButtons.forEach(b => b.classList.remove('active-bg'));
+                btn.classList.add('active-bg');
+            });
+        });
+
         // =================================================================
-        // 15. АУДИО-ПЛЕЕР
+        // 16. АУДИО-ПЛЕЕР
         // =================================================================
         function openAudioPlayer(audioElement) {
             currentAudio = audioElement;
@@ -1343,7 +1471,7 @@
         document.addEventListener('ended', (e) => { if (e.target === currentAudio) playPauseBtn.textContent = '▶'; }, true);
 
         // =================================================================
-        // 16. ИНИЦИАЛИЗАЦИЯ
+        // 17. ИНИЦИАЛИЗАЦИЯ
         // =================================================================
         function init() {
             if (!localStorage.getItem('userChoice')) { showModal(); }
@@ -1376,7 +1504,7 @@
         });
 
         init();
-        console.log('манго арбузник – финальная версия со стикерами!');
+        console.log('манго арбузник – теперь живой!');
     </script>
 </body>
 </html>
