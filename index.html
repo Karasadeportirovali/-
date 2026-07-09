@@ -239,7 +239,7 @@
             <span class="dot online" id="menuStatusDot"></span>
             <span id="menuStatusText">Подключено</span>
         </div>
-        <div class="version-info">v.6.1</div>
+        <div class="version-info">v.6.2</div>
     </div>
 
     <!-- ОСНОВНОЙ БЛОК -->
@@ -353,10 +353,10 @@
         let currentUser = null; // { uid, username }
         let currentChatId = null;
         let chatListeners = [];
-        let isLoginMode = true; // true = вход, false = регистрация
+        let isLoginMode = true;
 
         // ============================================================
-        // 2. ЭКРАН ВХОДА/РЕГИСТРАЦИИ
+        // 2. DOM-ЭЛЕМЕНТЫ
         // ============================================================
         const loginScreen = document.getElementById('loginScreen');
         const loginUsername = document.getElementById('loginUsername');
@@ -364,18 +364,45 @@
         const loginBtn = document.getElementById('loginBtn');
         const toggleLoginLink = document.getElementById('toggleLoginLink');
         const loginTitle = document.getElementById('loginTitle');
+        const mainWrapper = document.getElementById('mainWrapper');
+        const chatListEl = document.getElementById('chatList');
+        const chatWindow = document.getElementById('chatWindow');
+        const chatMessagesEl = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+        const chatTitle = document.getElementById('chatTitle');
+        const chatBack = document.getElementById('chatBack');
+        const createChatBtn = document.getElementById('createChatBtn');
+        const createChatModal = document.getElementById('createChatModal');
+        const searchUserInput = document.getElementById('searchUserInput');
+        const userSearchResults = document.getElementById('userSearchResults');
+        const createChatConfirm = document.getElementById('createChatConfirm');
+        const createChatCancel = document.getElementById('createChatCancel');
+        const moreClearHistory = document.getElementById('moreClearHistory');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const menuBtn = document.getElementById('menuBtn');
+        const menuOverlay = document.getElementById('menuOverlay');
+        const sideMenu = document.getElementById('sideMenu');
+        const menuItems = document.querySelectorAll('.menu-item');
+        const tabs = {
+            chats: document.getElementById('chatsTab'),
+            room: document.getElementById('roomTab'),
+            settings: document.getElementById('settingsTab'),
+        };
 
+        // ============================================================
+        // 3. ПЕРЕКЛЮЧЕНИЕ РЕЖИМА (ВХОД / РЕГИСТРАЦИЯ)
+        // ============================================================
         function toggleLoginMode() {
             isLoginMode = !isLoginMode;
             loginTitle.textContent = isLoginMode ? 'Вход' : 'Регистрация';
             loginBtn.textContent = isLoginMode ? 'Войти' : 'Зарегистрироваться';
             toggleLoginLink.textContent = isLoginMode ? 'Нет аккаунта? Зарегистрируйся' : 'Уже есть аккаунт? Войти';
         }
-
         toggleLoginLink.addEventListener('click', toggleLoginMode);
 
         // ============================================================
-        // 3. ОБРАБОТЧИК КНОПКИ (ВХОД/РЕГИСТРАЦИЯ)
+        // 4. ОБРАБОТЧИК КНОПКИ (ВХОД / РЕГИСТРАЦИЯ)
         // ============================================================
         loginBtn.addEventListener('click', async () => {
             const username = loginUsername.value.trim();
@@ -394,12 +421,10 @@
                     return;
                 }
                 let foundUid = null;
-                let foundUser = null;
                 snapshot.forEach(child => {
                     const data = child.val();
                     if (data.password === password) {
                         foundUid = child.key;
-                        foundUser = data;
                     }
                 });
                 if (!foundUid) {
@@ -407,12 +432,14 @@
                     return;
                 }
                 // Вход выполнен
-                currentUser = { uid: foundUid, username: foundUser.username };
+                const userData = await usersRef.child(foundUid).once('value');
+                currentUser = { uid: foundUid, username: userData.val().username };
                 loginScreen.classList.add('hidden');
-                showMainApp();
+                mainWrapper.style.display = 'flex';
+                loadChats();
+                updateClock();
             } else {
                 // ===== РЕГИСТРАЦИЯ =====
-                // Проверяем, существует ли уже такой ник
                 const usersRef = database.ref('users');
                 const snapshot = await usersRef.orderByChild('username').equalTo(username).once('value');
                 if (snapshot.exists()) {
@@ -426,11 +453,13 @@
                     // Сохраняем данные пользователя
                     await usersRef.child(uid).set({
                         username: username,
-                        password: password // в реальном проекте хэшировать!
+                        password: password
                     });
                     currentUser = { uid, username };
                     loginScreen.classList.add('hidden');
-                    showMainApp();
+                    mainWrapper.style.display = 'flex';
+                    loadChats();
+                    updateClock();
                 } catch (e) {
                     alert('Ошибка регистрации: ' + e.message);
                 }
@@ -438,19 +467,19 @@
         });
 
         // ============================================================
-        // 4. ОБРАБОТЧИК АВТОРИЗАЦИИ (сохранение сессии)
+        // 5. ОБРАБОТЧИК АВТОРИЗАЦИИ (ВОССТАНОВЛЕНИЕ СЕССИИ)
         // ============================================================
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                // Проверяем, есть ли у этого uid username в базе
                 const snapshot = await database.ref('users/' + user.uid).once('value');
                 const data = snapshot.val();
                 if (data && data.username) {
                     currentUser = { uid: user.uid, username: data.username };
                     loginScreen.classList.add('hidden');
-                    showMainApp();
+                    mainWrapper.style.display = 'flex';
+                    loadChats();
+                    updateClock();
                 } else {
-                    // Если нет – показываем экран входа
                     loginScreen.classList.remove('hidden');
                 }
             } else {
@@ -459,25 +488,17 @@
         });
 
         // ============================================================
-        // 5. ОСНОВНОЙ ИНТЕРФЕЙС
+        // 6. ЧАСЫ
         // ============================================================
-        function showMainApp() {
-            document.getElementById('mainWrapper').style.display = 'flex';
-            loadChats();
-            updateClock();
-            setInterval(updateClock, 60000);
-        }
-
         function updateClock() {
             const now = new Date();
             document.getElementById('datetime').textContent = now.toLocaleString('ru', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
         }
+        setInterval(updateClock, 60000);
 
         // ============================================================
-        // 6. СПИСОК ЧАТОВ
+        // 7. ЗАГРУЗКА СПИСКА ЧАТОВ
         // ============================================================
-        const chatListEl = document.getElementById('chatList');
-
         function loadChats() {
             if (!currentUser) return;
             const chatsRef = database.ref('chats');
@@ -508,15 +529,8 @@
         }
 
         // ============================================================
-        // 7. ОКНО ЧАТА
+        // 8. ОТКРЫТИЕ / ЗАКРЫТИЕ ЧАТА
         // ============================================================
-        const chatWindow = document.getElementById('chatWindow');
-        const chatMessagesEl = document.getElementById('chatMessages');
-        const chatInput = document.getElementById('chatInput');
-        const chatSendBtn = document.getElementById('chatSendBtn');
-        const chatTitle = document.getElementById('chatTitle');
-        const chatBack = document.getElementById('chatBack');
-
         function openChat(chatId, otherUsername) {
             currentChatId = chatId;
             chatTitle.textContent = otherUsername || 'Чат';
@@ -552,11 +566,9 @@
             currentChatId = null;
         });
 
-        chatSendBtn.addEventListener('click', sendChatMessage);
-        chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') sendChatMessage();
-        });
-
+        // ============================================================
+        // 9. ОТПРАВКА СООБЩЕНИЙ
+        // ============================================================
         function sendChatMessage() {
             const text = chatInput.value.trim();
             if (!text || !currentChatId || !currentUser) return;
@@ -573,15 +585,14 @@
             chatInput.value = '';
         }
 
+        chatSendBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+
         // ============================================================
-        // 8. СОЗДАНИЕ НОВОГО ЧАТА
+        // 10. СОЗДАНИЕ ЧАТА
         // ============================================================
-        const createChatBtn = document.getElementById('createChatBtn');
-        const createChatModal = document.getElementById('createChatModal');
-        const searchUserInput = document.getElementById('searchUserInput');
-        const userSearchResults = document.getElementById('userSearchResults');
-        const createChatConfirm = document.getElementById('createChatConfirm');
-        const createChatCancel = document.getElementById('createChatCancel');
         let selectedUserUid = null;
 
         createChatBtn.addEventListener('click', () => {
@@ -662,13 +673,12 @@
         });
 
         // ============================================================
-        // 9. НАСТРОЙКИ (масштаб, тема)
+        // 11. НАСТРОЙКИ (масштаб, тема)
         // ============================================================
         const zoomSlider = document.getElementById('zoomSlider');
         const zoomValue = document.getElementById('zoomValue');
         const zoomDefaultBtn = document.getElementById('zoomDefaultBtn');
         const lightThemeToggle = document.getElementById('lightThemeToggle');
-        const mainWrapper = document.getElementById('mainWrapper');
 
         function applyZoom(value) {
             const percent = parseInt(value);
@@ -687,6 +697,7 @@
             localStorage.setItem('lightTheme', light);
         }
         lightThemeToggle.addEventListener('change', (e) => applyTheme(e.target.checked));
+
         // Загрузка сохранённых
         const savedZoom = localStorage.getItem('zoomLevel');
         if (savedZoom) { zoomSlider.value = savedZoom; applyZoom(savedZoom); }
@@ -695,18 +706,8 @@
         applyTheme(savedTheme);
 
         // ============================================================
-        // 10. МЕНЮ И НАВИГАЦИЯ
+        // 12. МЕНЮ И НАВИГАЦИЯ
         // ============================================================
-        const menuBtn = document.getElementById('menuBtn');
-        const menuOverlay = document.getElementById('menuOverlay');
-        const sideMenu = document.getElementById('sideMenu');
-        const menuItems = document.querySelectorAll('.menu-item');
-        const tabs = {
-            chats: document.getElementById('chatsTab'),
-            room: document.getElementById('roomTab'),
-            settings: document.getElementById('settingsTab'),
-        };
-
         function toggleMenu(open) {
             if (open === undefined) {
                 const isOpen = sideMenu.classList.contains('open');
@@ -738,11 +739,11 @@
             });
         });
 
-        document.getElementById('logoutBtn').addEventListener('click', () => {
+        logoutBtn.addEventListener('click', () => {
             auth.signOut().then(() => {
                 currentUser = null;
                 loginScreen.classList.remove('hidden');
-                document.getElementById('mainWrapper').style.display = 'none';
+                mainWrapper.style.display = 'none';
                 chatWindow.classList.remove('active');
                 if (chatListeners.length) {
                     chatListeners.forEach(ref => ref.off());
@@ -753,7 +754,7 @@
         });
 
         // ============================================================
-        // 11. ВИДЕОЧАТ
+        // 13. ВИДЕОЧАТ (упрощённая версия)
         // ============================================================
         const localVideo = document.getElementById('localVideo');
         const remoteVideo = document.getElementById('remoteVideo');
@@ -764,10 +765,10 @@
         const screenBtn = document.getElementById('screenBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
 
-        let localStream = null, peer = null, currentCall = null, isConnected = false, isScreenSharing = false, screenStream = null;
+        let localStream = null, peer = null, currentCall = null, isConnected = false;
+        let isScreenSharing = false, screenStream = null;
         let isHost = false, clients = {}, myDataConnection = null;
         const ROOM_ID = 'mango_chat';
-        let reconnectTimer = null;
 
         function initVideoChat() {
             if (!localStream) {
@@ -971,18 +972,16 @@
             remotePlaceholder.classList.remove('hidden');
             isConnected = false;
             isHost = false; clients = {}; myDataConnection = null;
-            if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer=null; }
         });
 
         // ============================================================
-        // 12. ЗАПУСК
+        // 14. ЗАПУСК
         // ============================================================
         setTimeout(() => {
             document.getElementById('splash').classList.add('hidden');
         }, 2000);
 
-        // Если пользователь уже авторизован – onAuthStateChanged обработает
-        console.log('арбузник v.6.1 – вход/регистрация исправлены!');
+        console.log('арбузник v.6.2 – регистрация работает!');
     </script>
 </body>
 </html>
