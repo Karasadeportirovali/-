@@ -389,25 +389,31 @@
         .chat-list-item {
             padding:10px; border-radius:8px; cursor:pointer; margin-bottom:4px; color:var(--txt2); transition:background .15s;
             white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+            display:flex; justify-content:space-between; align-items:center;
         }
         .chat-list-item:hover { background:var(--bg3); }
         .chat-list-item.active { background:var(--bg4); color:var(--txt); font-weight:600; }
+        .chat-list-item .delete-chat-btn {
+            background:none; border:none; color:var(--txt2); font-size:16px; cursor:pointer; padding:0 4px; opacity:0.6; transition:opacity 0.15s;
+        }
+        .chat-list-item .delete-chat-btn:hover { opacity:1; color:#f44; }
         .chat-area { flex:1; display:flex; flex-direction:column; min-width:0; }
         .no-chat-selected { flex:1; display:flex; align-items:center; justify-content:center; color:var(--txt2); font-size:16px; }
     </style>
 </head>
 <body>
     <div class="splash" id="splash">арбузник</div>
+
+    <!-- Модалка регистрации -->
     <div class="modal-overlay" id="userModal">
         <div class="modal-box">
             <h2>арбузник</h2>
-            <p>ты кто?</p>
-            <div class="modal-buttons">
-                <button id="modalOwner">Владелец</button>
-                <button id="modalTester">Тестировщик</button>
-            </div>
+            <p>Придумай себе имя</p>
+            <input type="text" id="nameInput" placeholder="Твой ник" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--br);background:var(--bg3);color:var(--txt);margin-bottom:12px;outline:none;" maxlength="20">
+            <button id="nameSubmit" style="background:var(--ac);color:var(--bg);border:none;padding:8px 20px;border-radius:20px;cursor:pointer;">Войти</button>
         </div>
     </div>
+
     <div class="recording-modal" id="recordingModal">
         <div class="preview"><video id="recPreview" autoplay muted playsinline></video></div>
         <div class="timer" id="recTimer">0:00</div>
@@ -453,7 +459,7 @@
             <span class="dot online" id="menuStatusDot"></span>
             <span id="menuStatusText">Подключено</span>
         </div>
-        <div class="version-info">v.6.0 (многопользовательская)</div>
+        <div class="version-info">v.7.0 (регистрация + удаление чатов)</div>
     </div>
     <div class="main" id="mainWrapper">
         <div class="topbar">
@@ -471,12 +477,12 @@
                         <div class="video-card" id="localVideoCard">
                             <video id="localVideo" autoplay muted playsinline></video>
                             <div class="camera-placeholder" id="localPlaceholder">📷</div>
-                            <span class="label" id="localLabel">Владелец</span>
+                            <span class="label" id="localLabel">Я</span>
                         </div>
                         <div class="video-card" id="remoteVideoCard">
                             <video id="remoteVideo" autoplay playsinline></video>
                             <div class="camera-placeholder" id="remotePlaceholder">📷</div>
-                            <span class="label remote" id="remoteLabel">Тестировщик</span>
+                            <span class="label remote" id="remoteLabel">Собеседник</span>
                         </div>
                     </div>
                     <div class="controls-room">
@@ -529,10 +535,10 @@
             <div class="tab" id="settingsTab">
                 <div class="settings-tab">
                     <div class="setting-group">
-                        <label>Кто ты?</label>
-                        <div class="user-selector">
-                            <label><input type="radio" name="userChoice" value="owner"> Владелец</label>
-                            <label><input type="radio" name="userChoice" value="tester"> Тестировщик</label>
+                        <label>Твой ник</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" id="nicknameInput" placeholder="Введи новый ник" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--br);background:var(--bg3);color:var(--txt);outline:none;" maxlength="20">
+                            <button id="changeNameBtn" class="btn-default">Сменить</button>
                         </div>
                     </div>
                     <div class="setting-group">
@@ -619,89 +625,7 @@
 
         let currentChatId = null;
         let messagesRef = null;
-
-        // ===== DOM ELEMENTS =====
-        const localVideo = document.getElementById('localVideo');
-        const remoteVideo = document.getElementById('remoteVideo');
-        const localLabel = document.getElementById('localLabel');
-        const remoteLabel = document.getElementById('remoteLabel');
-        const localPlaceholder = document.getElementById('localPlaceholder');
-        const remotePlaceholder = document.getElementById('remotePlaceholder');
-        const chatMessages = document.getElementById('chatMessages');
-        const chatInput = document.getElementById('chatInput');
-        const attachBtn = document.getElementById('attachBtn');
-        const fileInput = document.getElementById('fileInput');
-        const voiceBtn = document.getElementById('voiceBtn');
-        const circleBtn = document.getElementById('circleBtn');
-        const sendBtn = document.getElementById('sendBtn');
-        const stickerPanel = document.getElementById('stickerPanel');
-        const stickerUpload = document.getElementById('stickerUpload');
-        const stickerPreview = document.getElementById('stickerPreview');
-        const typingIndicator = document.getElementById('typingIndicator');
-        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
-        const scrollDownBtn = document.getElementById('scrollDownBtn');
-        const moreBtn = document.getElementById('moreBtn');
-        const moreMenu = document.getElementById('moreMenu');
-        const moreClearHistory = document.getElementById('moreClearHistory');
-        const replyIndicator = document.getElementById('replyIndicator');
-        const replyText = document.getElementById('replyText');
-        const cancelReply = document.getElementById('cancelReply');
-        const contextMenu = document.getElementById('contextMenu');
-        const myColorPicker = document.getElementById('myColorPicker');
-        const bgButtons = document.querySelectorAll('.bg-selector button');
-        const zoomSlider = document.getElementById('zoomSlider');
-        const zoomValue = document.getElementById('zoomValue');
-        const zoomDefaultBtn = document.getElementById('zoomDefaultBtn');
-        const lightThemeToggle = document.getElementById('lightThemeToggle');
-        const mainWrapper = document.getElementById('mainWrapper');
-        const camBtn = document.getElementById('camBtn');
-        const micBtn = document.getElementById('micBtn');
-        const screenBtn = document.getElementById('screenBtn');
-        const disconnectBtn = document.getElementById('disconnectBtn');
-        const modal = document.getElementById('userModal');
-        const modalOwner = document.getElementById('modalOwner');
-        const modalTester = document.getElementById('modalTester');
-        const splash = document.getElementById('splash');
-        const datetimeEl = document.getElementById('datetime');
-        const audioPlayer = document.getElementById('audioPlayer');
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        const volumeSlider = document.getElementById('volumeSlider');
-        const speedSelect = document.getElementById('speedSelect');
-        const closePlayerBtn = document.getElementById('closePlayerBtn');
-        const recordingModal = document.getElementById('recordingModal');
-        const recPreview = document.getElementById('recPreview');
-        const recTimer = document.getElementById('recTimer');
-        const recSendBtn = document.getElementById('recSendBtn');
-        const recCancelBtn = document.getElementById('recCancelBtn');
-        const flipBtn = document.getElementById('flipBtn');
-        const flashBtn = document.getElementById('flashBtn');
-        const chatListContainer = document.getElementById('chatListContainer');
-        const createChatBtn = document.getElementById('createChatBtn');
-        const activeChatContainer = document.getElementById('activeChatContainer');
-        const noChat = document.getElementById('noChat');
-        const userRadios = document.querySelectorAll('input[name="userChoice"]');
-        const menuBtn = document.getElementById('menuBtn');
-        const sideMenu = document.getElementById('sideMenu');
-        const menuOverlay = document.getElementById('menuOverlay');
-        const menuItems = document.querySelectorAll('.menu-item');
-        const menuStatusDot = document.getElementById('menuStatusDot');
-        const menuStatusText = document.getElementById('menuStatusText');
-        const imageEditor = document.getElementById('imageEditor');
-        const editorCanvas = document.getElementById('editorCanvas');
-        const editorRotate = document.getElementById('editorRotate');
-        const editorCrop = document.getElementById('editorCrop');
-        const editorCancel = document.getElementById('editorCancel');
-        const editorApply = document.getElementById('editorApply');
-        const ctxCopy = document.getElementById('ctxCopy');
-        const ctxDeleteSelf = document.getElementById('ctxDeleteSelf');
-        const ctxDelete = document.getElementById('ctxDelete');
-        const ctxReply = document.getElementById('ctxReply');
-        const scheduleDialog = document.getElementById('scheduleDialog');
-        const scheduleTime = document.getElementById('scheduleTime');
-        const scheduleConfirm = document.getElementById('scheduleConfirm');
-        const scheduleCancel = document.getElementById('scheduleCancel');
-
-        let myName = 'Владелец';
+        let myName = '';
         let myColor = '#ff00c8';
         let localStream = null, peer = null, currentCall = null, isConnected = false, isScreenSharing = false, screenStream = null;
         let clients = {}, myDataConnection = null;
@@ -745,8 +669,8 @@
 
         function applyZoom(value) {
             const percent = parseInt(value);
-            mainWrapper.style.transform = `scale(${percent / 100})`;
-            zoomValue.textContent = percent + '%';
+            document.getElementById('mainWrapper').style.transform = `scale(${percent / 100})`;
+            document.getElementById('zoomValue').textContent = percent + '%';
             localStorage.setItem('zoomLevel', percent);
         }
         function applyTheme(light) {
@@ -754,79 +678,75 @@
             localStorage.setItem('lightTheme', light);
             if (light) {
                 document.querySelector('.chat-messages').style.background = '#f5f5f5';
-                bgButtons.forEach(btn => btn.classList.toggle('active-bg', btn.dataset.bg === '#f5f5f5'));
+                document.querySelectorAll('.bg-selector button').forEach(btn => btn.classList.toggle('active-bg', btn.dataset.bg === '#f5f5f5'));
                 localStorage.setItem(BG_KEY, '#f5f5f5');
             } else {
                 document.querySelector('.chat-messages').style.background = '#0a0a0a';
-                bgButtons.forEach(btn => btn.classList.toggle('active-bg', btn.dataset.bg === '#0a0a0a'));
+                document.querySelectorAll('.bg-selector button').forEach(btn => btn.classList.toggle('active-bg', btn.dataset.bg === '#0a0a0a'));
                 localStorage.setItem(BG_KEY, '#0a0a0a');
             }
         }
 
         function updateClock() {
             const now = new Date();
-            datetimeEl.textContent = now.toLocaleString('ru', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
+            document.getElementById('datetime').textContent = now.toLocaleString('ru', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
         }
         updateClock();
         setInterval(updateClock, 60000);
 
         window.addEventListener('load', () => {
             setTimeout(() => {
-                splash.classList.add('hidden');
-                setTimeout(() => splash.style.display = 'none', 500);
+                document.getElementById('splash').classList.add('hidden');
+                setTimeout(() => document.getElementById('splash').style.display = 'none', 500);
             }, 2000);
+            if (localStorage.getItem('userName')) {
+                myName = localStorage.getItem('userName');
+                document.getElementById('userModal').classList.add('hidden');
+                initApp();
+            } else {
+                document.getElementById('userModal').classList.remove('hidden');
+            }
         });
 
-        function showModal() { modal.classList.remove('hidden'); }
-        function hideModal() { modal.classList.add('hidden'); }
-        modalOwner.addEventListener('click', ()=>{ setUser('owner'); hideModal(); });
-        modalTester.addEventListener('click', ()=>{ setUser('tester'); hideModal(); });
-
-        function setUser(choice) {
-            if (choice === 'tester') {
-                myName = 'Тестировщик';
-                localLabel.textContent = myName;
-                remoteLabel.textContent = 'Владелец';
-            } else {
-                myName = 'Владелец';
-                localLabel.textContent = myName;
-                remoteLabel.textContent = 'Тестировщик';
-            }
-            localStorage.setItem('userChoice', choice);
-            userRadios.forEach(r => r.checked = (r.value === choice));
-        }
+        document.getElementById('nameSubmit').addEventListener('click', () => {
+            const input = document.getElementById('nameInput');
+            myName = input.value.trim() || 'Гость';
+            localStorage.setItem('userName', myName);
+            document.getElementById('localLabel').textContent = myName;
+            document.getElementById('nicknameInput').value = myName;
+            document.getElementById('userModal').classList.add('hidden');
+            initApp();
+        });
+        document.getElementById('nameInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('nameSubmit').click();
+        });
 
         function updateMenuStatus(online, text) {
-            menuStatusDot.className = 'dot ' + (online ? 'online' : 'offline');
-            menuStatusText.textContent = text;
+            document.getElementById('menuStatusDot').className = 'dot ' + (online ? 'online' : 'offline');
+            document.getElementById('menuStatusText').textContent = text;
         }
 
         function toggleMenu(open) {
-            if (open === undefined) {
-                const isOpen = sideMenu.classList.contains('open');
-                open = !isOpen;
-            }
-            sideMenu.classList.toggle('open', open);
-            menuOverlay.classList.toggle('active', open);
+            const menu = document.getElementById('sideMenu');
+            const overlay = document.getElementById('menuOverlay');
+            if (open === undefined) open = !menu.classList.contains('open');
+            menu.classList.toggle('open', open);
+            overlay.classList.toggle('active', open);
         }
-        menuBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleMenu(); });
-        menuOverlay.addEventListener('click', () => toggleMenu(false));
+        document.getElementById('menuBtn').addEventListener('click', (e) => { e.stopPropagation(); toggleMenu(); });
+        document.getElementById('menuOverlay').addEventListener('click', () => toggleMenu(false));
 
-        menuItems.forEach(item => {
+        document.querySelectorAll('.menu-item').forEach(item => {
             item.addEventListener('click', () => {
                 const tab = item.dataset.tab;
-                menuItems.forEach(m => m.classList.remove('active'));
+                document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
                 item.classList.add('active');
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 const target = document.getElementById(tab + 'Tab');
                 if (target) target.classList.add('active');
                 toggleMenu(false);
-                if (tab === 'chats') {
-                    isChatActive = true;
-                    unreadCount = 0;
-                } else {
-                    isChatActive = false;
-                }
+                if (tab === 'chats') isChatActive = true;
+                else isChatActive = false;
                 if (tab === 'room') initVideoChat();
             });
         });
@@ -835,36 +755,44 @@
             if (currentChatId) {
                 if (confirm('Удалить всю историю этого чата?')) {
                     database.ref(`chats/${currentChatId}/messages`).remove().then(() => {
-                        chatMessages.innerHTML = '';
+                        document.getElementById('chatMessages').innerHTML = '';
                     }).catch(err => console.warn('Ошибка очистки Firebase:', err));
                 }
             }
         }
-        moreClearHistory.addEventListener('click', () => { clearHistory(); moreMenu.classList.remove('active'); });
-        moreBtn.addEventListener('click', (e) => { e.stopPropagation(); moreMenu.classList.toggle('active'); });
-        document.addEventListener('click', () => moreMenu.classList.remove('active'));
+        document.getElementById('moreClearHistory').addEventListener('click', () => { clearHistory(); document.getElementById('moreMenu').classList.remove('active'); });
+        document.getElementById('moreBtn').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('moreMenu').classList.toggle('active'); });
+        document.addEventListener('click', () => document.getElementById('moreMenu').classList.remove('active'));
+        document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
 
-        clearHistoryBtn.addEventListener('click', clearHistory);
+        document.getElementById('zoomSlider').addEventListener('input', (e) => applyZoom(e.target.value));
+        document.getElementById('zoomDefaultBtn').addEventListener('click', () => { document.getElementById('zoomSlider').value = 100; applyZoom(100); });
+        document.getElementById('lightThemeToggle').addEventListener('change', (e) => applyTheme(e.target.checked));
 
-        zoomSlider.addEventListener('input', (e) => applyZoom(e.target.value));
-        zoomDefaultBtn.addEventListener('click', () => { zoomSlider.value = 100; applyZoom(100); });
-
-        lightThemeToggle.addEventListener('change', (e) => applyTheme(e.target.checked));
-
-        myColorPicker.addEventListener('input', (e) => {
+        document.getElementById('myColorPicker').addEventListener('input', (e) => {
             myColor = e.target.value;
             localStorage.setItem(MY_COLOR_KEY, myColor);
             document.querySelectorAll('.msg.me .sender').forEach(el => el.style.color = myColor);
         });
 
-        bgButtons.forEach(btn => {
+        document.querySelectorAll('.bg-selector button').forEach(btn => {
             btn.addEventListener('click', () => {
                 const bg = btn.dataset.bg;
                 document.querySelector('.chat-messages').style.background = bg;
                 localStorage.setItem(BG_KEY, bg);
-                bgButtons.forEach(b => b.classList.remove('active-bg'));
+                document.querySelectorAll('.bg-selector button').forEach(b => b.classList.remove('active-bg'));
                 btn.classList.add('active-bg');
             });
+        });
+
+        document.getElementById('changeNameBtn').addEventListener('click', () => {
+            const newName = document.getElementById('nicknameInput').value.trim();
+            if (newName) {
+                myName = newName;
+                localStorage.setItem('userName', myName);
+                document.getElementById('localLabel').textContent = myName;
+                alert('Ник изменён');
+            }
         });
 
         function loadChatList() {
@@ -892,20 +820,32 @@
             const defaultChat = {
                 name: 'Общий',
                 createdBy: myName,
-                members: { owner: true, tester: true }
+                members: { [myName]: true }
             };
             database.ref('chats/general').set(defaultChat);
         }
 
         function renderChatList() {
-            chatListContainer.innerHTML = '';
+            const container = document.getElementById('chatListContainer');
+            container.innerHTML = '';
             chats.forEach(chat => {
                 const div = document.createElement('div');
                 div.className = 'chat-list-item';
+                div.innerHTML = `<span>${chat.name}</span>`;
+                const delBtn = document.createElement('button');
+                delBtn.className = 'delete-chat-btn';
+                delBtn.innerHTML = '🗑️';
+                delBtn.title = 'Удалить чат';
+                delBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteChat(chat.id);
+                });
+                div.appendChild(delBtn);
                 if (chat.id === currentChatId) div.classList.add('active');
-                div.textContent = chat.name;
-                div.addEventListener('click', () => selectChat(chat.id));
-                chatListContainer.appendChild(div);
+                div.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('delete-chat-btn')) selectChat(chat.id);
+                });
+                container.appendChild(div);
             });
         }
 
@@ -914,17 +854,14 @@
             if (messagesRef) messagesRef.off();
             currentChatId = chatId;
             messagesRef = database.ref(`chats/${chatId}/messages`);
-            noChat.style.display = 'none';
-            activeChatContainer.style.display = 'flex';
-            chatMessages.innerHTML = '';
+            document.getElementById('noChat').style.display = 'none';
+            document.getElementById('activeChatContainer').style.display = 'flex';
+            document.getElementById('chatMessages').innerHTML = '';
             subscribeToMessages();
-            document.querySelectorAll('.chat-list-item').forEach(el => {
-                const isActive = el.textContent === (chats.find(c => c.id === chatId)?.name || '');
-                el.classList.toggle('active', isActive);
-            });
+            renderChatList();
         }
 
-        createChatBtn.addEventListener('click', () => {
+        document.getElementById('createChatBtn').addEventListener('click', () => {
             const name = prompt('Название нового чата:');
             if (name) {
                 const newId = 'chat_' + Date.now();
@@ -935,6 +872,20 @@
                 }).then(() => selectChat(newId));
             }
         });
+
+        function deleteChat(chatId) {
+            if (!confirm('Удалить этот чат и все сообщения?')) return;
+            database.ref(`chats/${chatId}`).remove()
+                .then(() => {
+                    if (currentChatId === chatId) {
+                        currentChatId = null;
+                        messagesRef = null;
+                        document.getElementById('noChat').style.display = 'block';
+                        document.getElementById('activeChatContainer').style.display = 'none';
+                    }
+                })
+                .catch(err => console.warn('Ошибка удаления чата:', err));
+        }
 
         function subscribeToMessages() {
             if (!messagesRef) return;
@@ -963,15 +914,15 @@
         }
 
         function sendTextMessage() {
-            const text = chatInput.value.trim();
+            const text = document.getElementById('chatInput').value.trim();
             if (!text) return;
             sendMessageToFirebase({ type: 'text', text, replyTo: replyTo || null, reactions: null });
-            chatInput.value = '';
+            document.getElementById('chatInput').value = '';
             clearReply();
             vibrate();
         }
-        chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); sendTextMessage(); } });
-        sendBtn.addEventListener('click', sendTextMessage);
+        document.getElementById('chatInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); sendTextMessage(); } });
+        document.getElementById('sendBtn').addEventListener('click', sendTextMessage);
 
         function addChatMessage(text, sender, time, id, replyTo, reactions, type, isMe) {
             const div = document.createElement('div');
@@ -995,7 +946,7 @@
             footer.innerHTML = `<span class="time">${timeStr}</span>`;
             if (isMe) footer.innerHTML += `<span class="status-icon" data-status="delivered">✓✓</span>`;
             div.appendChild(footer);
-            chatMessages.appendChild(div);
+            document.getElementById('chatMessages').appendChild(div);
             autoScrollIfNeeded();
             addMessageInteractions(div, id, sender);
             return div;
@@ -1029,7 +980,7 @@
             footer.innerHTML = `<span class="time">${time}</span>`;
             if (isMe) footer.innerHTML += `<span class="status-icon" data-status="delivered">✓✓</span>`;
             div.appendChild(footer);
-            chatMessages.appendChild(div);
+            document.getElementById('chatMessages').appendChild(div);
             autoScrollIfNeeded();
             addMessageInteractions(div, id, sender);
         }
@@ -1052,7 +1003,7 @@
             footer.innerHTML = `<span class="time">${timeStr}</span>`;
             if (isMe) footer.innerHTML += `<span class="status-icon" data-status="delivered">✓✓</span>`;
             div.appendChild(footer);
-            chatMessages.appendChild(div);
+            document.getElementById('chatMessages').appendChild(div);
             autoScrollIfNeeded();
             const btn = div.querySelector('.play-audio');
             const audio = new Audio(url);
@@ -1081,7 +1032,7 @@
             footer.innerHTML = `<span class="time">${timeStr}</span>`;
             if (isMe) footer.innerHTML += `<span class="status-icon" data-status="delivered">✓✓</span>`;
             div.appendChild(footer);
-            chatMessages.appendChild(div);
+            document.getElementById('chatMessages').appendChild(div);
             autoScrollIfNeeded();
             const video = div.querySelector('video');
             const circle = div.querySelector('.circle-video');
@@ -1109,7 +1060,7 @@
             footer.innerHTML = `<span class="time">${time}</span>`;
             if (isMe) footer.innerHTML += `<span class="status-icon" data-status="delivered">✓✓</span>`;
             div.appendChild(footer);
-            chatMessages.appendChild(div);
+            document.getElementById('chatMessages').appendChild(div);
             autoScrollIfNeeded();
             addMessageInteractions(div, id, sender);
         }
@@ -1147,24 +1098,25 @@
 
         function setReply(id, sender, text) {
             replyTo = { id, sender, text };
-            replyIndicator.style.display = 'flex';
-            replyText.textContent = `${sender}: ${text}`;
+            document.getElementById('replyIndicator').style.display = 'flex';
+            document.getElementById('replyText').textContent = `${sender}: ${text}`;
         }
-        function clearReply() { replyTo = null; replyIndicator.style.display = 'none'; }
-        cancelReply.addEventListener('click', clearReply);
+        function clearReply() { replyTo = null; document.getElementById('replyIndicator').style.display = 'none'; }
+        document.getElementById('cancelReply').addEventListener('click', clearReply);
 
         function showContextMenu(x, y, msgId, sender) {
             selectedMsgId = msgId;
-            contextMenu.style.left = Math.min(x, window.innerWidth - 160) + 'px';
-            contextMenu.style.top = Math.min(y, window.innerHeight - 120) + 'px';
-            contextMenu.classList.add('active');
-            ctxDelete.style.display = (sender === myName) ? 'block' : 'none';
-            ctxDeleteSelf.style.display = 'block';
-            ctxCopy.style.display = 'block';
+            const menu = document.getElementById('contextMenu');
+            menu.style.left = Math.min(x, window.innerWidth - 160) + 'px';
+            menu.style.top = Math.min(y, window.innerHeight - 120) + 'px';
+            menu.classList.add('active');
+            document.getElementById('ctxDelete').style.display = (sender === myName) ? 'block' : 'none';
+            document.getElementById('ctxDeleteSelf').style.display = 'block';
+            document.getElementById('ctxCopy').style.display = 'block';
         }
-        document.addEventListener('click', () => contextMenu.classList.remove('active'));
+        document.addEventListener('click', () => document.getElementById('contextMenu').classList.remove('active'));
         document.addEventListener('contextmenu', (e) => {
-            if (!e.target.closest('.msg')) contextMenu.classList.remove('active');
+            if (!e.target.closest('.msg')) document.getElementById('contextMenu').classList.remove('active');
         });
 
         document.querySelectorAll('[data-reaction]').forEach(el => {
@@ -1173,7 +1125,7 @@
                 const emoji = el.dataset.reaction;
                 if (selectedMsgId) {
                     updateReaction(selectedMsgId, emoji, myName);
-                    contextMenu.classList.remove('active');
+                    document.getElementById('contextMenu').classList.remove('active');
                 }
             });
         });
@@ -1215,14 +1167,14 @@
             if (el) el.remove();
             if (messagesRef) messagesRef.child(msgId).remove().catch(err => console.warn('Ошибка удаления из Firebase:', err));
         }
-        ctxDelete.addEventListener('click', (e) => {
+        document.getElementById('ctxDelete').addEventListener('click', (e) => {
             e.stopPropagation();
-            if (selectedMsgId) { deleteMessageLocally(selectedMsgId); contextMenu.classList.remove('active'); }
+            if (selectedMsgId) { deleteMessageLocally(selectedMsgId); document.getElementById('contextMenu').classList.remove('active'); }
         });
-        ctxDeleteSelf.addEventListener('click', () => {
-            if (selectedMsgId) { deleteMessageLocally(selectedMsgId); contextMenu.classList.remove('active'); }
+        document.getElementById('ctxDeleteSelf').addEventListener('click', () => {
+            if (selectedMsgId) { deleteMessageLocally(selectedMsgId); document.getElementById('contextMenu').classList.remove('active'); }
         });
-        ctxCopy.addEventListener('click', () => {
+        document.getElementById('ctxCopy').addEventListener('click', () => {
             if (selectedMsgId) {
                 const el = document.querySelector(`[data-msg-id="${selectedMsgId}"]`);
                 if (el) {
@@ -1239,10 +1191,10 @@
                         });
                     }
                 }
-                contextMenu.classList.remove('active');
+                document.getElementById('contextMenu').classList.remove('active');
             }
         });
-        ctxReply.addEventListener('click', (e) => {
+        document.getElementById('ctxReply').addEventListener('click', (e) => {
             e.stopPropagation();
             if (selectedMsgId) {
                 const el = document.querySelector(`[data-msg-id="${selectedMsgId}"]`);
@@ -1251,7 +1203,7 @@
                     const content = el.querySelector('.content')?.textContent || '[медиа]';
                     setReply(selectedMsgId, sender, content);
                 }
-                contextMenu.classList.remove('active');
+                document.getElementById('contextMenu').classList.remove('active');
             }
         });
 
@@ -1260,22 +1212,23 @@
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
-                    editorCanvas.width = img.width;
-                    editorCanvas.height = img.height;
-                    const ctx = editorCanvas.getContext('2d');
+                    const canvas = document.getElementById('editorCanvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0);
-                    imageEditor.classList.add('active');
+                    document.getElementById('imageEditor').classList.add('active');
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
-        editorRotate.addEventListener('click', () => {
-            editorRotation = (editorRotation + 90) % 360;
-            const canvas = editorCanvas;
+        document.getElementById('editorRotate').addEventListener('click', () => {
+            const canvas = document.getElementById('editorCanvas');
             const ctx = canvas.getContext('2d');
             const img = new Image();
             img.onload = () => {
+                editorRotation = (editorRotation + 90) % 360;
                 if (editorRotation === 90 || editorRotation === 270) {
                     canvas.width = img.height;
                     canvas.height = img.width;
@@ -1291,45 +1244,45 @@
             };
             img.src = canvas.toDataURL();
         });
-        editorCancel.addEventListener('click', () => { imageEditor.classList.remove('active'); });
-        editorApply.addEventListener('click', () => {
-            editorCanvas.toBlob((blob) => {
+        document.getElementById('editorCancel').addEventListener('click', () => document.getElementById('imageEditor').classList.remove('active'));
+        document.getElementById('editorApply').addEventListener('click', () => {
+            const canvas = document.getElementById('editorCanvas');
+            canvas.toBlob((blob) => {
                 const file = new File([blob], 'edited_image.jpg', { type: 'image/jpeg' });
                 sendFile(file, file.type);
-                imageEditor.classList.remove('active');
+                document.getElementById('imageEditor').classList.remove('active');
             }, 'image/jpeg');
         });
 
         async function sendFile(file, mime) {
             const blob = await file.arrayBuffer().then(buf => new Blob([buf], { type: file.type }));
             const base64 = await blobToBase64(blob);
-            const msgData = {
+            sendMessageToFirebase({
                 type: 'file',
                 data: base64,
                 name: file.name,
                 mime: mime,
                 size: file.size
-            };
-            sendMessageToFirebase(msgData);
+            });
             vibrate();
         }
 
         let attachClickTimer = null;
-        attachBtn.addEventListener('click', (e) => {
-            if (attachClickTimer) { clearTimeout(attachClickTimer); attachClickTimer = null; fileInput.click(); return; }
-            attachClickTimer = setTimeout(() => { attachClickTimer = null; stickerPanel.classList.toggle('active'); }, 300);
+        document.getElementById('attachBtn').addEventListener('click', (e) => {
+            if (attachClickTimer) { clearTimeout(attachClickTimer); attachClickTimer = null; document.getElementById('fileInput').click(); return; }
+            attachClickTimer = setTimeout(() => { attachClickTimer = null; document.getElementById('stickerPanel').classList.toggle('active'); }, 300);
         });
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('#attachBtn') && !e.target.closest('#stickerPanel')) stickerPanel.classList.remove('active');
+            if (!e.target.closest('#attachBtn') && !e.target.closest('#stickerPanel')) document.getElementById('stickerPanel').classList.remove('active');
         });
-        fileInput.addEventListener('change', (e) => {
+        document.getElementById('fileInput').addEventListener('change', (e) => {
             const files = e.target.files;
             if (!files.length) return;
             for (const file of files) {
                 if (file.type.startsWith('image/')) openImageEditor(file);
                 else sendFile(file, file.type);
             }
-            fileInput.value = '';
+            e.target.value = '';
         });
 
         async function startVoiceRecording() {
@@ -1345,26 +1298,26 @@
                     sendMessageToFirebase({ type: 'voice', data: base64 });
                     stream.getTracks().forEach(t=>t.stop());
                     if (waveElement) { waveElement.remove(); waveElement = null; }
-                    voiceBtn.textContent = '🎙️';
-                    voiceBtn.classList.remove('recording');
+                    document.getElementById('voiceBtn').textContent = '🎙️';
+                    document.getElementById('voiceBtn').classList.remove('recording');
                     vibrate();
                 };
                 voiceRecorder.start();
                 isRecordingVoice = true;
-                voiceBtn.textContent = '⏹️';
-                voiceBtn.classList.add('recording');
+                document.getElementById('voiceBtn').textContent = '⏹️';
+                document.getElementById('voiceBtn').classList.add('recording');
                 if (!waveElement) {
                     waveElement = document.createElement('div');
                     waveElement.className = 'voice-wave';
                     for (let i=0; i<7; i++) { const s = document.createElement('span'); waveElement.appendChild(s); }
-                    voiceBtn.parentNode.insertBefore(waveElement, voiceBtn.nextSibling);
+                    document.getElementById('voiceBtn').parentNode.insertBefore(waveElement, document.getElementById('voiceBtn').nextSibling);
                 }
             } catch(e) { alert('Ошибка доступа к микрофону для записи: '+e.message); }
         }
         function stopVoiceRecording() {
             if (voiceRecorder && voiceRecorder.state !== 'inactive') { voiceRecorder.stop(); isRecordingVoice = false; }
         }
-        voiceBtn.addEventListener('click', () => { if (isRecordingVoice) stopVoiceRecording(); else startVoiceRecording(); });
+        document.getElementById('voiceBtn').addEventListener('click', () => { if (isRecordingVoice) stopVoiceRecording(); else startVoiceRecording(); });
 
         function openRecorder() {
             if (recIsRecording) return;
@@ -1372,9 +1325,9 @@
                 try {
                     const constraints = { video: { facingMode: currentFacingMode, width: { ideal: 320 }, height: { ideal: 320 } }, audio: true };
                     recMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-                    recPreview.srcObject = recMediaStream;
-                    recordingModal.classList.add('active');
-                    recTimer.textContent = '0:00';
+                    document.getElementById('recPreview').srcObject = recMediaStream;
+                    document.getElementById('recordingModal').classList.add('active');
+                    document.getElementById('recTimer').textContent = '0:00';
                     recSecondsCircle = 0;
                     recRecordedChunks = [];
                     recIsRecording = false;
@@ -1401,7 +1354,7 @@
                     recSecondsCircle++;
                     const mins = Math.floor(recSecondsCircle / 60);
                     const secs = recSecondsCircle % 60;
-                    recTimer.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                    document.getElementById('recTimer').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
                     if (recSecondsCircle >= 60) {
                         if (recRecorder && recRecorder.state !== 'inactive') { recRecorder.stop(); recIsRecording = false; clearInterval(recTimerIntervalCircle); }
                     }
@@ -1415,12 +1368,12 @@
             if (recRecorder && recRecorder.state !== 'inactive') { try { recRecorder.stop(); } catch(e) {} }
             if (recMediaStream) { recMediaStream.getTracks().forEach(t => t.stop()); recMediaStream = null; }
             if (recTimerIntervalCircle) clearInterval(recTimerIntervalCircle);
-            recordingModal.classList.remove('active');
+            document.getElementById('recordingModal').classList.remove('active');
             recIsRecording = false;
         }
-        recSendBtn.addEventListener('click', () => { if (recIsRecording) stopRecordingAndSendCircle(); else closeRecorderCircle(); });
-        recCancelBtn.addEventListener('click', closeRecorderCircle);
-        flipBtn.addEventListener('click', async () => {
+        document.getElementById('recSendBtn').addEventListener('click', () => { if (recIsRecording) stopRecordingAndSendCircle(); else closeRecorderCircle(); });
+        document.getElementById('recCancelBtn').addEventListener('click', closeRecorderCircle);
+        document.getElementById('flipBtn').addEventListener('click', async () => {
             const newMode = (currentFacingMode === 'user') ? 'environment' : 'user';
             currentFacingMode = newMode;
             if (recMediaStream) {
@@ -1428,7 +1381,7 @@
                 if (track) { try { await track.applyConstraints({ facingMode: newMode }); } catch(e) {} }
             }
         });
-        flashBtn.addEventListener('click', () => {
+        document.getElementById('flashBtn').addEventListener('click', () => {
             flashActive = !flashActive;
             if (recMediaStream) {
                 const track = recMediaStream.getVideoTracks()[0];
@@ -1436,35 +1389,37 @@
                     try { track.applyConstraints({ advanced: [{ torch: flashActive && currentFacingMode === 'environment' }] }); } catch(e) {}
                 }
             }
-            flashBtn.style.opacity = flashActive ? '1' : '0.5';
+            document.getElementById('flashBtn').style.opacity = flashActive ? '1' : '0.5';
         });
-        circleBtn.addEventListener('click', openRecorder);
+        document.getElementById('circleBtn').addEventListener('click', openRecorder);
 
         function renderStickers() {
             const stickers = getStickers();
-            stickerPanel.innerHTML = '';
+            const panel = document.getElementById('stickerPanel');
+            panel.innerHTML = '';
             if (stickers.length === 0) {
                 const empty = document.createElement('div');
                 empty.className = 'empty-stickers';
                 empty.textContent = 'Загрузи стикеры в настройках';
-                stickerPanel.appendChild(empty);
+                panel.appendChild(empty);
                 return;
             }
             stickers.forEach((base64) => {
                 const img = document.createElement('img');
                 img.src = base64;
                 img.addEventListener('click', () => sendSticker(base64));
-                stickerPanel.appendChild(img);
+                panel.appendChild(img);
             });
         }
         function sendSticker(base64) {
             sendMessageToFirebase({ type: 'sticker', data: base64 });
-            stickerPanel.classList.remove('active');
+            document.getElementById('stickerPanel').classList.remove('active');
             vibrate();
         }
         function renderStickerPreview() {
             const stickers = getStickers();
-            stickerPreview.innerHTML = '';
+            const preview = document.getElementById('stickerPreview');
+            preview.innerHTML = '';
             stickers.forEach((base64, index) => {
                 const container = document.createElement('div');
                 container.style.position = 'relative';
@@ -1496,10 +1451,10 @@
                     renderStickers();
                 });
                 container.appendChild(remove);
-                stickerPreview.appendChild(container);
+                preview.appendChild(container);
             });
         }
-        stickerUpload.addEventListener('change', async (e) => {
+        document.getElementById('stickerUpload').addEventListener('change', async (e) => {
             const files = e.target.files;
             if (!files.length) return;
             const stickers = getStickers();
@@ -1513,51 +1468,52 @@
             saveStickers(stickers);
             renderStickers();
             renderStickerPreview();
-            stickerUpload.value = '';
+            e.target.value = '';
         });
 
-        function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
+        function scrollToBottom() { document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight; }
         function autoScrollIfNeeded() { if (!isScrolledUp) scrollToBottom(); }
-        chatMessages.addEventListener('scroll', () => {
+        document.getElementById('chatMessages').addEventListener('scroll', () => {
             const threshold = 100;
-            const isBottom = chatMessages.scrollTop >= chatMessages.scrollHeight - chatMessages.clientHeight - threshold;
-            if (isBottom) { scrollDownBtn.classList.remove('show'); isScrolledUp = false; }
-            else { scrollDownBtn.classList.add('show'); isScrolledUp = true; }
+            const chat = document.getElementById('chatMessages');
+            const isBottom = chat.scrollTop >= chat.scrollHeight - chat.clientHeight - threshold;
+            if (isBottom) { document.getElementById('scrollDownBtn').classList.remove('show'); isScrolledUp = false; }
+            else { document.getElementById('scrollDownBtn').classList.add('show'); isScrolledUp = true; }
         });
-        scrollDownBtn.addEventListener('click', () => { scrollToBottom(); scrollDownBtn.classList.remove('show'); });
+        document.getElementById('scrollDownBtn').addEventListener('click', () => { scrollToBottom(); document.getElementById('scrollDownBtn').classList.remove('show'); });
 
         function openAudioPlayer(audioElement) {
             currentAudio = audioElement;
-            playPauseBtn.textContent = audioElement.paused ? '▶' : '⏸';
-            volumeSlider.value = audioElement.volume;
-            speedSelect.value = audioElement.playbackRate;
-            audioPlayer.classList.add('show');
+            document.getElementById('playPauseBtn').textContent = audioElement.paused ? '▶' : '⏸';
+            document.getElementById('volumeSlider').value = audioElement.volume;
+            document.getElementById('speedSelect').value = audioElement.playbackRate;
+            document.getElementById('audioPlayer').classList.add('show');
         }
-        playPauseBtn.addEventListener('click', () => {
+        document.getElementById('playPauseBtn').addEventListener('click', () => {
             if (!currentAudio) return;
-            if (currentAudio.paused) { currentAudio.play(); playPauseBtn.textContent = '⏸'; }
-            else { currentAudio.pause(); playPauseBtn.textContent = '▶'; }
+            if (currentAudio.paused) { currentAudio.play(); document.getElementById('playPauseBtn').textContent = '⏸'; }
+            else { currentAudio.pause(); document.getElementById('playPauseBtn').textContent = '▶'; }
         });
-        volumeSlider.addEventListener('input', (e) => { if (currentAudio) currentAudio.volume = parseFloat(e.target.value); });
-        speedSelect.addEventListener('change', (e) => { if (currentAudio) currentAudio.playbackRate = parseFloat(e.target.value); });
-        closePlayerBtn.addEventListener('click', () => { if (currentAudio) { currentAudio.pause(); currentAudio = null; } audioPlayer.classList.remove('show'); });
-        document.addEventListener('ended', (e) => { if (e.target === currentAudio) playPauseBtn.textContent = '▶'; }, true);
+        document.getElementById('volumeSlider').addEventListener('input', (e) => { if (currentAudio) currentAudio.volume = parseFloat(e.target.value); });
+        document.getElementById('speedSelect').addEventListener('change', (e) => { if (currentAudio) currentAudio.playbackRate = parseFloat(e.target.value); });
+        document.getElementById('closePlayerBtn').addEventListener('click', () => { if (currentAudio) { currentAudio.pause(); currentAudio = null; } document.getElementById('audioPlayer').classList.remove('show'); });
+        document.addEventListener('ended', (e) => { if (e.target === currentAudio) document.getElementById('playPauseBtn').textContent = '▶'; }, true);
 
         async function initVideoChat() {
             if (!localStream) {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                     localStream = stream;
-                    localVideo.srcObject = stream;
-                    localPlaceholder.classList.add('hidden');
-                    camBtn.classList.add('active');
-                    micBtn.classList.add('active');
+                    document.getElementById('localVideo').srcObject = stream;
+                    document.getElementById('localPlaceholder').classList.add('hidden');
+                    document.getElementById('camBtn').classList.add('active');
+                    document.getElementById('micBtn').classList.add('active');
                 } catch(e) { alert('Не удалось получить доступ к камере/микрофону: ' + e.message); }
             }
         }
-        camBtn.addEventListener('click', () => { if (localStream) { const tracks = localStream.getVideoTracks(); if (tracks.length) { const t = tracks[0]; t.enabled = !t.enabled; camBtn.classList.toggle('active', t.enabled); camBtn.textContent = t.enabled ? '📷 Камера' : '📷 Выкл'; } } });
-        micBtn.addEventListener('click', () => { if (localStream) { const tracks = localStream.getAudioTracks(); if (tracks.length) { const t = tracks[0]; t.enabled = !t.enabled; micBtn.classList.toggle('active', t.enabled); micBtn.textContent = t.enabled ? '🎤 Микрофон' : '🎤 Выкл'; } } });
-        screenBtn.addEventListener('click', async () => { if (isScreenSharing) stopScreenShare(); else await startScreenShare(); });
+        document.getElementById('camBtn').addEventListener('click', () => { if (localStream) { const tracks = localStream.getVideoTracks(); if (tracks.length) { const t = tracks[0]; t.enabled = !t.enabled; document.getElementById('camBtn').classList.toggle('active', t.enabled); document.getElementById('camBtn').textContent = t.enabled ? '📷 Камера' : '📷 Выкл'; } } });
+        document.getElementById('micBtn').addEventListener('click', () => { if (localStream) { const tracks = localStream.getAudioTracks(); if (tracks.length) { const t = tracks[0]; t.enabled = !t.enabled; document.getElementById('micBtn').classList.toggle('active', t.enabled); document.getElementById('micBtn').textContent = t.enabled ? '🎤 Микрофон' : '🎤 Выкл'; } } });
+        document.getElementById('screenBtn').addEventListener('click', async () => { if (isScreenSharing) stopScreenShare(); else await startScreenShare(); });
         async function startScreenShare() {
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
@@ -1566,16 +1522,16 @@
                 const old = localStream.getVideoTracks()[0];
                 if (old) { localStream.removeTrack(old); old.stop(); }
                 localStream.addTrack(vTrack);
-                localVideo.srcObject = localStream;
+                document.getElementById('localVideo').srcObject = localStream;
                 if (currentCall) {
                     const sender = currentCall.peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
                     if (sender) await sender.replaceTrack(vTrack);
                 }
                 isScreenSharing = true;
-                screenBtn.classList.add('active');
-                screenBtn.textContent = '🖥️ Остановить';
-                camBtn.classList.remove('active');
-                camBtn.textContent = '📷 Выкл';
+                document.getElementById('screenBtn').classList.add('active');
+                document.getElementById('screenBtn').textContent = '🖥️ Остановить';
+                document.getElementById('camBtn').classList.remove('active');
+                document.getElementById('camBtn').textContent = '📷 Выкл';
                 vTrack.onended = () => stopScreenShare();
             } catch(e) { alert('Ошибка доступа к экрану: '+e.message); }
         }
@@ -1587,23 +1543,23 @@
                     const old = localStream.getVideoTracks()[0];
                     if (old) { localStream.removeTrack(old); old.stop(); }
                     localStream.addTrack(newTrack);
-                    localVideo.srcObject = localStream;
+                    document.getElementById('localVideo').srcObject = localStream;
                     if (currentCall) {
                         const sender = currentCall.peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
                         if (sender) sender.replaceTrack(newTrack);
                     }
                     isScreenSharing = false;
-                    screenBtn.classList.remove('active');
-                    screenBtn.textContent = '🖥️ Демка';
-                    camBtn.classList.add('active');
-                    camBtn.textContent = '📷 Камера';
+                    document.getElementById('screenBtn').classList.remove('active');
+                    document.getElementById('screenBtn').textContent = '🖥️ Демка';
+                    document.getElementById('camBtn').classList.add('active');
+                    document.getElementById('camBtn').textContent = '📷 Камера';
                 }).catch(err => console.error('Не удалось вернуть камеру:', err));
         }
-        disconnectBtn.addEventListener('click', () => {
+        document.getElementById('disconnectBtn').addEventListener('click', () => {
             if (currentCall) { currentCall.close(); currentCall = null; }
             if (peer) { peer.destroy(); peer = null; }
-            remoteVideo.srcObject = null;
-            remotePlaceholder.classList.remove('hidden');
+            document.getElementById('remoteVideo').srcObject = null;
+            document.getElementById('remotePlaceholder').classList.remove('hidden');
             isConnected = false;
             clients = {}; myDataConnection = null;
             updateMenuStatus(false, 'Отключено');
@@ -1611,23 +1567,23 @@
         function setupCall(call) {
             currentCall = call;
             call.on('stream', (stream) => {
-                remoteVideo.srcObject = stream;
-                remotePlaceholder.classList.add('hidden');
+                document.getElementById('remoteVideo').srcObject = stream;
+                document.getElementById('remotePlaceholder').classList.add('hidden');
                 isConnected = true;
                 updateMenuStatus(true, 'Видео подключено');
             });
             call.on('close', () => {
-                remoteVideo.srcObject = null;
-                remotePlaceholder.classList.remove('hidden');
+                document.getElementById('remoteVideo').srcObject = null;
+                document.getElementById('remotePlaceholder').classList.remove('hidden');
                 isConnected = false;
                 currentCall = null;
                 updateMenuStatus(false, 'Видео отключено');
             });
         }
 
-        scheduleCancel.addEventListener('click', () => scheduleDialog.classList.remove('active'));
-        scheduleConfirm.addEventListener('click', () => {
-            const timeStr = scheduleTime.value;
+        document.getElementById('scheduleCancel').addEventListener('click', () => document.getElementById('scheduleDialog').classList.remove('active'));
+        document.getElementById('scheduleConfirm').addEventListener('click', () => {
+            const timeStr = document.getElementById('scheduleTime').value;
             if (!timeStr) { alert('Выберите время'); return; }
             const [hours, minutes] = timeStr.split(':').map(Number);
             const now = new Date();
@@ -1636,54 +1592,86 @@
             if (target <= now) target.setDate(target.getDate() + 1);
             const delayMs = target - now;
             if (delayMs < 60000) { alert('Выберите время хотя бы через 1 минуту'); return; }
-            const text = chatInput.value.trim();
+            const text = document.getElementById('chatInput').value.trim();
             if (!text) { alert('Напишите сообщение для отложенной отправки.'); return; }
             const timer = setTimeout(() => {
                 sendMessageToFirebase({ type: 'text', text });
                 vibrate();
             }, delayMs);
             scheduledTimers.push(timer);
-            scheduleDialog.classList.remove('active');
-            chatInput.value = '';
+            document.getElementById('scheduleDialog').classList.remove('active');
+            document.getElementById('chatInput').value = '';
             alert(`Сообщение будет отправлено в ${target.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`);
         });
 
-        function loadSettings() {
-            const savedUser = localStorage.getItem('userChoice');
-            if (savedUser === 'tester') { setUser('tester'); document.querySelector('input[name="userChoice"][value="tester"]').checked = true; }
-            else if (savedUser === 'owner') { setUser('owner'); document.querySelector('input[name="userChoice"][value="owner"]').checked = true; }
-            else { myName = 'Владелец'; localLabel.textContent = myName; remoteLabel.textContent = 'Тестировщик'; }
+        function initPeer() {
+            const uniqueId = ROOM_ID + '-' + Date.now() + '-' + Math.random().toString(36).substr(2,6);
+            peer = new Peer(uniqueId, {
+                host: 'truesignal.herokuapp.com',
+                port: 443,
+                path: '/',
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: ['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'], username:'openrelayproject', credential:'openrelayproject' },
+                        { urls: ['turn:global.turn.twilio.com:3478?transport=udp','turn:global.turn.twilio.com:3478?transport=tcp'], username:'2d0c2eb0d1f5f7b6d9e2b5c8f3a6e7d9', credential:'q3k9w7f2' }
+                    ]
+                }
+            });
+            peer.on('open', () => {
+                const conn = peer.connect(ROOM_ID);
+                conn.on('open', () => {
+                    myDataConnection = conn;
+                    conn.send({ type: 'chat', text: '👋 Я здесь', sender: myName });
+                    conn.on('data', (data) => {});
+                    conn.on('close', () => { myDataConnection = null; });
+                });
+                peer.on('connection', (conn) => {
+                    clients[conn.peer] = conn;
+                    conn.on('data', (data) => {});
+                    conn.on('close', () => { delete clients[conn.peer]; });
+                });
+                peer.on('call', (call) => {
+                    if (currentCall) { call.close(); return; }
+                    if (!localStream) {
+                        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                            .then(stream => {
+                                localStream = stream;
+                                document.getElementById('localVideo').srcObject = stream;
+                                document.getElementById('localPlaceholder').classList.add('hidden');
+                                call.answer(stream);
+                                setupCall(call);
+                            })
+                            .catch(() => call.close());
+                    } else {
+                        call.answer(localStream);
+                        setupCall(call);
+                    }
+                });
+            });
+        }
+
+        function initApp() {
+            document.getElementById('localLabel').textContent = myName;
+            document.getElementById('nicknameInput').value = myName;
             const savedZoom = localStorage.getItem('zoomLevel');
-            if (savedZoom) { zoomSlider.value = parseInt(savedZoom); applyZoom(parseInt(savedZoom)); }
+            if (savedZoom) { document.getElementById('zoomSlider').value = parseInt(savedZoom); applyZoom(parseInt(savedZoom)); }
             else applyZoom(100);
             const savedTheme = localStorage.getItem('lightTheme') === 'true';
-            lightThemeToggle.checked = savedTheme;
+            document.getElementById('lightThemeToggle').checked = savedTheme;
             applyTheme(savedTheme);
             myColor = getMyColor();
-            myColorPicker.value = myColor;
+            document.getElementById('myColorPicker').value = myColor;
             const bg = getChatBg();
             document.querySelector('.chat-messages').style.background = bg;
-            bgButtons.forEach(btn => btn.classList.toggle('active-bg', btn.dataset.bg === bg));
+            document.querySelectorAll('.bg-selector button').forEach(btn => btn.classList.toggle('active-bg', btn.dataset.bg === bg));
             renderStickers();
             renderStickerPreview();
             updateMenuStatus(true, 'Подключено');
             loadChatList();
-        }
-
-        userRadios.forEach(radio => radio.addEventListener('change', (e) => { if (e.target.checked) setUser(e.target.value); }));
-
-        function init() {
-            if (!localStorage.getItem('userChoice')) showModal();
-            else loadSettings();
-            loadSettings();
-            renderStickerPreview();
-            chatInput.addEventListener('focus', () => setTimeout(() => chatInput.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300));
-            const chatsTab = document.getElementById('chatsTab');
-            const observer = new MutationObserver(() => {
-                if (chatsTab.classList.contains('active')) { isChatActive = true; unreadCount = 0; }
-                else isChatActive = false;
-            });
-            observer.observe(chatsTab, { attributes: true, attributeFilter: ['class'] });
+            if (!peer) initPeer();
         }
 
         window.addEventListener('beforeunload', () => {
@@ -1694,47 +1682,6 @@
             if (recRecorder && recRecorder.state !== 'inactive') recRecorder.stop();
             scheduledTimers.forEach(t => clearTimeout(t));
         });
-
-        // PeerJS с исправленным хостом
-        const uniqueId = ROOM_ID + '-' + Date.now() + '-' + Math.random().toString(36).substr(2,6);
-        peer = new Peer(uniqueId, {
-            host: 'truesignal.herokuapp.com',  // надёжный сервер
-            port: 443,
-            path: '/',
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' },
-                    { urls: ['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'], username:'openrelayproject', credential:'openrelayproject' },
-                    { urls: ['turn:global.turn.twilio.com:3478?transport=udp','turn:global.turn.twilio.com:3478?transport=tcp'], username:'2d0c2eb0d1f5f7b6d9e2b5c8f3a6e7d9', credential:'q3k9w7f2' }
-                ]
-            }
-        });
-        peer.on('open', () => {
-            const conn = peer.connect(ROOM_ID);
-            conn.on('open', () => {
-                myDataConnection = conn;
-                conn.send({ type: 'chat', text: '👋 Я здесь', sender: myName });
-                conn.on('data', (data) => { /* обработка data-сообщений */ });
-                conn.on('close', () => { myDataConnection = null; });
-            });
-            peer.on('connection', (conn) => {
-                clients[conn.peer] = conn;
-                conn.on('data', (data) => {});
-                conn.on('close', () => { delete clients[conn.peer]; });
-            });
-            peer.on('call', (call) => {
-                if (currentCall) { call.close(); return; }
-                if (!localStream) {
-                    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                        .then(stream => { localStream = stream; localVideo.srcObject = stream; localPlaceholder.classList.add('hidden'); call.answer(stream); setupCall(call); })
-                        .catch(() => call.close());
-                } else { call.answer(localStream); setupCall(call); }
-            });
-        });
-
-        init();
     </script>
 </body>
 </html>
