@@ -35,75 +35,134 @@
         }
         body { background: var(--bg); color: var(--txt); font-family: 'Segoe UI', Roboto, sans-serif; height: 100vh; display: flex; overflow: hidden; }
 
-        .menu-btn { position: fixed; top:12px; left:12px; z-index:100; background:var(--bg2); border:1px solid var(--br); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--txt); transition:.2s; box-shadow:var(--sh); }
+        .menu-btn {
+            position: fixed; top:12px; left:12px; z-index:100; background:var(--bg2); border:1px solid var(--br); border-radius:50%;
+            width:44px; height:44px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--txt); transition:.2s; box-shadow:var(--sh);
+        }
         .menu-btn:hover { background:var(--bg3); }
         .menu-btn svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
         .menu-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:99; display:none; backdrop-filter:blur(2px); }
         .menu-overlay.active { display:block; }
-        .side-menu { position:fixed; top:0; left:-280px; width:280px; height:100%; background:var(--menu-bg); border-right:1px solid var(--menu-border); z-index:100; transition:left 0.3s cubic-bezier(0.4,0,0.2,1); padding:80px 20px 20px 20px; display:flex; flex-direction:column; gap:2px; box-shadow:var(--sh); }
+        .side-menu {
+            position:fixed; top:0; left:-280px; width:280px; height:100%; background:var(--menu-bg); border-right:1px solid var(--menu-border); z-index:100;
+            transition:left 0.3s cubic-bezier(0.4,0,0.2,1); padding:80px 20px 20px 20px; display:flex; flex-direction:column; gap:2px; box-shadow:var(--sh);
+        }
         .side-menu.open { left:0; }
         .side-menu .logo { font-size:18px; font-weight:600; color:var(--menu-text); letter-spacing:1px; padding:0 0 20px 0; border-bottom:1px solid var(--menu-border); margin-bottom:12px; }
-        .side-menu .menu-item { padding:10px 12px; border-radius:6px; font-size:15px; display:flex; align-items:center; gap:12px; color:var(--txt2); cursor:pointer; transition:.15s; border:none; background:transparent; width:100%; text-align:left; font-weight:400; position:relative; }
+        .side-menu .menu-item {
+            padding:10px 12px; border-radius:6px; font-size:15px; display:flex; align-items:center; gap:12px; color:var(--txt2); cursor:pointer; transition:.15s;
+            border:none; background:transparent; width:100%; text-align:left; font-weight:400;
+            position:relative;
+        }
         .side-menu .menu-item:hover { background:var(--menu-hover); color:var(--txt); }
         .side-menu .menu-item.active { background:var(--menu-active); color:var(--txt); font-weight:500; }
         .side-menu .menu-item .icon { font-size:18px; width:24px; text-align:center; color:var(--txt2); }
-        .side-menu .menu-item .badge { position:absolute; right:16px; top:50%; transform:translateY(-50%); background:#f44; color:#fff; font-size:11px; font-weight:600; border-radius:50%; min-width:20px; height:20px; display:flex; align-items:center; justify-content:center; padding:0 4px; display:none; }
+        .side-menu .menu-item .badge {
+            position:absolute; right:16px; top:50%; transform:translateY(-50%);
+            background:#f44; color:#fff; font-size:11px; font-weight:600;
+            border-radius:50%; min-width:20px; height:20px; display:flex; align-items:center; justify-content:center;
+            padding:0 4px; display:none;
+        }
         .side-menu .menu-item .badge.show { display:flex; }
-        .side-menu .status-indicator { display:flex; align-items:center; gap:8px; padding:12px 12px 0 12px; font-size:13px; color:var(--txt2); margin-top:auto; border-top:1px solid var(--menu-border); padding-top:16px; }
+        .side-menu .status-indicator {
+            display:flex; align-items:center; gap:8px; padding:12px 12px 0 12px; font-size:13px; color:var(--txt2); margin-top:auto;
+            border-top:1px solid var(--menu-border); padding-top:16px;
+        }
         .side-menu .status-indicator .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
         .side-menu .status-indicator .dot.online { background:#5a5; }
         .side-menu .status-indicator .dot.offline { background:#a55; }
         .side-menu .version-info { text-align:center; font-size:12px; color:var(--txt3); padding:12px 0 4px 0; border-top:1px solid var(--menu-border); margin-top:8px; }
 
         .main { flex:1; display:flex; flex-direction:column; background:var(--bg); min-width:0; transition:transform .15s, background .2s; transform-origin:top left; position:relative; }
-        .topbar { display:flex; align-items:center; justify-content:space-between; padding:6px 12px 6px 64px; background:var(--bg2); border-bottom:1px solid var(--br); flex-shrink:0; flex-wrap:wrap; gap:4px; min-height:52px; position:relative; }
+        .topbar {
+            display:flex; align-items:center; justify-content:space-between; padding:6px 12px 6px 64px; background:var(--bg2); border-bottom:1px solid var(--br); flex-shrink:0; flex-wrap:wrap; gap:4px; min-height:52px;
+            position:relative;
+        }
         .topbar .title { font-size:16px; font-weight:700; color:var(--ac); letter-spacing:1px; }
         .topbar .datetime { font-size:11px; color:var(--txt2); background:var(--bg3); padding:2px 10px; border-radius:20px; border:1px solid var(--br); white-space:nowrap; }
-        .topbar .more-btn { background:transparent; border:1px solid var(--br); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--txt2); cursor:pointer; font-size:18px; transition:.2s; }
+        .topbar .more-btn {
+            background:transparent; border:1px solid var(--br); border-radius:50%; width:32px; height:32px;
+            display:flex; align-items:center; justify-content:center; color:var(--txt2); cursor:pointer; font-size:18px;
+            transition:.2s;
+        }
         .topbar .more-btn:hover { background:var(--bg3); color:var(--txt); }
-        .topbar .more-menu { display:none; position:absolute; right:12px; top:48px; background:var(--bg2); border:1px solid var(--br); border-radius:12px; padding:4px 0; min-width:160px; box-shadow:var(--sh); z-index:200; }
+        .topbar .more-menu {
+            display:none; position:absolute; right:12px; top:48px; background:var(--bg2); border:1px solid var(--br); border-radius:12px;
+            padding:4px 0; min-width:160px; box-shadow:var(--sh); z-index:200;
+        }
         .topbar .more-menu.active { display:block; }
-        .topbar .more-menu button { display:block; width:100%; padding:8px 16px; background:transparent; border:none; color:var(--txt); text-align:left; font-size:13px; cursor:pointer; transition:.15s; }
+        .topbar .more-menu button {
+            display:block; width:100%; padding:8px 16px; background:transparent; border:none; color:var(--txt);
+            text-align:left; font-size:13px; cursor:pointer; transition:.15s;
+        }
         .topbar .more-menu button:hover { background:var(--bg3); }
 
         .content { flex:1; display:flex; overflow:hidden; position:relative; }
         .tab { display:none; width:100%; height:100%; flex-direction:column; padding:0; overflow-y:auto; }
         .tab.active { display:flex; }
 
-        .video-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; flex:1; min-height:0; margin-bottom:10px; padding:12px; transition: all 0.3s ease; }
+        .video-grid {
+            display:grid; grid-template-columns:1fr 1fr; gap:10px; flex:1; min-height:0; margin-bottom:10px; padding:12px; transition: all 0.3s ease;
+        }
         @media(max-width:700px){ .video-grid { grid-template-columns:1fr; gap:8px; } }
-        .video-card { background:var(--bg3); border-radius:16px; overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center; border:1px solid var(--br); cursor:pointer; transition: all 0.3s ease; min-height:120px; }
+        .video-card {
+            background:var(--bg3); border-radius:16px; overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center;
+            border:1px solid var(--br); cursor:pointer; transition: all 0.3s ease; min-height:120px;
+        }
         .video-card video { width:100%; height:100%; object-fit:cover; background:#000; transform:scaleX(-1); }
-        .video-card .camera-placeholder { position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:48px; color:#888; background:var(--bg3); pointer-events:none; transition: opacity 0.3s; }
+        .video-card .camera-placeholder {
+            position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+            font-size:48px; color:#888; background:var(--bg3); pointer-events:none; transition: opacity 0.3s;
+        }
         .video-card .camera-placeholder.hidden { opacity:0; }
-        .video-card .label { position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,.6); padding:2px 12px; border-radius:20px; font-size:12px; color:#ccc; backdrop-filter:blur(4px); border:1px solid var(--br); z-index:2; }
+        .video-card .label {
+            position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,.6); padding:2px 12px; border-radius:20px;
+            font-size:12px; color:#ccc; backdrop-filter:blur(4px); border:1px solid var(--br); z-index:2;
+        }
         .video-card .label.remote { color:#fc0; }
-        .video-card.expanded { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000; border-radius:0; background:#000; border:none; }
+        .video-card.expanded {
+            position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000; border-radius:0; background:#000; border:none;
+        }
         .video-card.expanded video { transform:scaleX(-1); }
         .video-card.expanded .label { font-size:16px; bottom:20px; left:20px; }
         .video-card.expanded .camera-placeholder { font-size:80px; }
         .video-card.expanded ~ .video-card { opacity:0; pointer-events:none; }
 
-        .controls-room { display:flex; justify-content:center; gap:8px; flex-shrink:0; padding:6px 0 12px; flex-wrap:wrap; position:relative; z-index:2; }
-        .controls-room button { background:var(--bg3); border:1px solid var(--br); padding:6px 14px; border-radius:40px; color:var(--txt); font-size:13px; cursor:pointer; transition:.15s; display:flex; align-items:center; gap:4px; }
+        .controls-room {
+            display:flex; justify-content:center; gap:8px; flex-shrink:0; padding:6px 0 12px; flex-wrap:wrap; position:relative; z-index:2;
+        }
+        .controls-room button {
+            background:var(--bg3); border:1px solid var(--br); padding:6px 14px; border-radius:40px; color:var(--txt); font-size:13px;
+            cursor:pointer; transition:.15s; display:flex; align-items:center; gap:4px;
+        }
         .controls-room button:hover { background:var(--br); }
         .controls-room .active { background:var(--ac); color:var(--bg); border-color:var(--ac); }
         .controls-room .danger { background:#a55; color:#fff; border-color:#a55; }
 
-        .chat-messages { flex:1; overflow-y:auto; padding:6px 8px; background:var(--chat-bg); border:none; border-radius:0; margin-bottom:0; transition:background .3s; display:flex; flex-direction:column; gap:2px; scrollbar-width:none; -ms-overflow-style:none; position:relative; }
+        .chat-messages {
+            flex:1; overflow-y:auto; padding:6px 8px; background:var(--chat-bg); border:none; border-radius:0; margin-bottom:0;
+            transition:background .3s; display:flex; flex-direction:column; gap:2px; scrollbar-width:none; -ms-overflow-style:none;
+            position:relative;
+        }
         .chat-messages::-webkit-scrollbar { display:none; }
         .chat-messages .msg { max-width:70%; padding:5px 12px 16px 12px; border-radius:14px; word-wrap:break-word; position:relative; animation:msgSlide .3s ease; margin-bottom:2px; align-self:flex-end !important; background:var(--msg-bg-me); border:1px solid var(--br); }
         .chat-messages .msg.other { align-self:flex-start !important; background:var(--msg-bg-other); }
         .chat-messages .msg.me { align-self:flex-end !important; background:var(--msg-bg-me); border:1px solid var(--br); }
-        .chat-messages .msg.msg-video { padding: 0 !important; background: transparent !important; border: none !important; max-width:200px; margin:4px 0; }
-        .chat-messages .msg.msg-video .circle-video { width:200px; height:200px; border-radius:50%; overflow:hidden; background:#000; cursor:pointer; position:relative; }
+        .chat-messages .msg.msg-video {
+            padding: 0 !important; background: transparent !important; border: none !important; max-width:200px; margin:4px 0;
+        }
+        .chat-messages .msg.msg-video .circle-video {
+            width:200px; height:200px; border-radius:50%; overflow:hidden; background:#000; cursor:pointer; position:relative;
+        }
         .chat-messages .msg.msg-video .circle-video video { width:100%; height:100%; object-fit:cover; display:block; }
         .chat-messages .msg.msg-video .circle-video video::-webkit-media-controls { display:none !important; }
         .chat-messages .msg.msg-video .circle-video video::-moz-media-controls { display:none !important; }
         .chat-messages .msg.msg-video .circle-video:hover video::-webkit-media-controls { display:block !important; }
         @keyframes msgSlide { 0% { opacity:0; transform:translateY(10px) scale(0.95); } 100% { opacity:1; transform:translateY(0) scale(1); } }
         .chat-messages .msg .sender { font-size:11px; color:var(--txt2); margin-bottom:2px; font-weight:600; }
-        .chat-messages .msg .msg-footer { display:flex; justify-content:flex-end; align-items:center; gap:4px; margin-top:2px; font-size:10px; color:var(--txt3); }
+        .chat-messages .msg .msg-footer {
+            display:flex; justify-content:flex-end; align-items:center; gap:4px; margin-top:2px; font-size:10px; color:var(--txt3);
+        }
         .chat-messages .msg .msg-footer .time { font-size:9px; }
         .chat-messages .msg .msg-footer .status-icon { font-weight:bold; font-size:12px; margin-left:4px; color:#5a5; }
         .chat-messages .msg .reply-to { font-size:11px; color:var(--ac); background:var(--bg3); padding:2px 8px; border-radius:8px; margin-bottom:3px; border-left:3px solid var(--ac); }
@@ -127,9 +186,13 @@
         .typing-indicator span:nth-child(3) { animation-delay:0.4s; }
         @keyframes typing-bounce { 0%,60%,100% { transform:translateY(0); } 30% { transform:translateY(-6px); } }
 
-        .chat-input-area { display:flex; gap:6px; align-items:center; flex-shrink:0; background:var(--bg2); padding:6px 10px; border-radius:40px; border:1px solid var(--br); position:relative; margin:6px 8px; }
+        .chat-input-area {
+            display:flex; gap:6px; align-items:center; flex-shrink:0; background:var(--bg2); padding:6px 10px; border-radius:40px; border:1px solid var(--br); position:relative; margin:6px 8px;
+        }
         .chat-input-area input[type="text"] { flex:1; background:0 0; border:0; color:var(--txt); font-size:14px; outline:0; padding:6px 0; }
-        .chat-input-area button { background:0 0; border:0; color:var(--txt2); font-size:18px; cursor:pointer; padding:4px 6px; transition:.2s; position:relative; }
+        .chat-input-area button {
+            background:0 0; border:0; color:var(--txt2); font-size:18px; cursor:pointer; padding:4px 6px; transition:.2s; position:relative;
+        }
         .chat-input-area button:hover { color:var(--txt); }
         .chat-input-area button.primary { color:var(--ac); font-size:20px; }
         .chat-input-area button.recording { color:#a55; }
@@ -154,7 +217,12 @@
         .reply-indicator { background:var(--bg3); padding:4px 10px; border-radius:16px; font-size:12px; color:var(--txt2); display:flex; align-items:center; gap:6px; margin:0 8px 4px; }
         .reply-indicator .cancel-reply { cursor:pointer; color:#f44; font-weight:bold; }
 
-        .scroll-down-btn { position:absolute; bottom:80px; right:20px; background:var(--bg2); border:1px solid var(--br); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; color:var(--txt2); font-size:20px; cursor:pointer; box-shadow:var(--sh); transition:.2s; z-index:50; opacity:0; pointer-events:none; transform:translateY(10px); }
+        .scroll-down-btn {
+            position:absolute; bottom:80px; right:20px; background:var(--bg2); border:1px solid var(--br); border-radius:50%;
+            width:44px; height:44px; display:flex; align-items:center; justify-content:center; color:var(--txt2); font-size:20px;
+            cursor:pointer; box-shadow:var(--sh); transition:.2s; z-index:50;
+            opacity:0; pointer-events:none; transform:translateY(10px);
+        }
         .scroll-down-btn.show { opacity:1; pointer-events:auto; transform:translateY(0); }
         .scroll-down-btn:hover { background:var(--bg3); color:var(--txt); }
 
@@ -189,7 +257,10 @@
         .btn-danger { background:#a55; border:1px solid #a55; color:#fff; padding:6px 16px; border-radius:30px; cursor:pointer; font-size:13px; transition:.15s; }
         .btn-danger:hover { background:#c66; }
 
-        .recording-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.92); display:none; align-items:center; justify-content:center; z-index:9999; flex-direction:column; animation:fadeIn .3s; }
+        .recording-modal {
+            position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.92); display:none;
+            align-items:center; justify-content:center; z-index:9999; flex-direction:column; animation:fadeIn .3s;
+        }
         .recording-modal.active { display:flex; }
         @keyframes fadeIn { 0% { opacity:0; } 100% { opacity:1; } }
         .recording-modal .preview { width:320px; height:320px; border-radius:50%; overflow:hidden; background:#000; margin-bottom:16px; }
@@ -203,11 +274,14 @@
         .recording-modal .controls-bottom .cancel-btn { background:#a55; color:#fff; }
         .recording-modal .controls-bottom .cancel-btn:hover { background:#c66; }
         .recording-modal .controls-bottom .action-btn { background:#2a2a2a; font-size:18px; padding:10px 16px; }
-        @media(max-width:700px){ .recording-modal .preview { width:240px; height:240px; } .recording-modal .controls-bottom button { padding:8px 14px; font-size:13px; min-width:50px; } }
 
-        .schedule-dialog { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:9999; }
+        .schedule-dialog {
+            position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:9999;
+        }
         .schedule-dialog.active { display:flex; }
-        .schedule-dialog .box { background:var(--bg2); padding:24px; border-radius:20px; max-width:320px; width:90%; border:1px solid var(--br); }
+        .schedule-dialog .box {
+            background:var(--bg2); padding:24px; border-radius:20px; max-width:320px; width:90%; border:1px solid var(--br);
+        }
         .schedule-dialog .box h3 { color:var(--txt); margin-bottom:12px; font-weight:400; }
         .schedule-dialog .box .row { display:flex; gap:10px; margin-bottom:12px; align-items:center; }
         .schedule-dialog .box .row label { color:var(--txt2); font-size:13px; min-width:60px; }
@@ -219,7 +293,9 @@
         .schedule-dialog .box .btns .confirm { background:#4a6d8a; border-color:#4a6d8a; color:#fff; }
         .schedule-dialog .box .btns .confirm:hover { background:#5a8aaa; }
 
-        .image-editor { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; align-items:center; justify-content:center; z-index:9999; flex-direction:column; }
+        .image-editor {
+            position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; align-items:center; justify-content:center; z-index:9999; flex-direction:column;
+        }
         .image-editor.active { display:flex; }
         .image-editor canvas { max-width:90%; max-height:70vh; border-radius:12px; box-shadow:0 0 30px rgba(0,0,0,0.8); }
         .image-editor .controls { display:flex; gap:16px; margin-top:20px; }
@@ -230,7 +306,10 @@
         .image-editor .controls .cancel { background:#a55; color:#fff; }
         .image-editor .controls .cancel:hover { background:#c66; }
 
-        .context-menu { position:fixed; background:var(--bg2); border-radius:12px; padding:6px; box-shadow:var(--sh); z-index:9998; display:none; flex-direction:column; border:1px solid var(--br); min-width:140px; }
+        .context-menu {
+            position:fixed; background:var(--bg2); border-radius:12px; padding:6px; box-shadow:var(--sh); z-index:9998;
+            display:none; flex-direction:column; border:1px solid var(--br); min-width:140px;
+        }
         .context-menu.active { display:flex; }
         .context-menu button { background:none; border:none; color:var(--txt); padding:4px 12px; text-align:left; font-size:13px; cursor:pointer; border-radius:6px; }
         .context-menu button:hover { background:var(--bg3); }
@@ -238,9 +317,15 @@
         .context-menu .reactions-row span { font-size:20px; cursor:pointer; padding:2px; }
         .context-menu .reactions-row span:hover { transform:scale(1.2); background:var(--bg3); border-radius:6px; }
 
-        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.8); display:flex; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(4px); animation:fadeIn .3s; }
+        .modal-overlay {
+            position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.8); display:flex; align-items:center; justify-content:center; z-index:9999;
+            backdrop-filter:blur(4px); animation:fadeIn .3s;
+        }
         .modal-overlay.hidden { display:none; }
-        .modal-box { background:var(--bg2); border-radius:24px; padding:28px; max-width:320px; width:90%; text-align:center; border:2px solid var(--ac); box-shadow:var(--sh); }
+        .modal-box {
+            background:var(--bg2); border-radius:24px; padding:28px; max-width:320px; width:90%; text-align:center;
+            border:2px solid var(--ac); box-shadow:var(--sh);
+        }
         .modal-box h2 { font-size:26px; color:var(--ac); margin-bottom:6px; }
         .modal-box p { color:var(--txt2); margin-bottom:16px; font-size:18px; font-weight:500; }
         .modal-buttons { display:flex; gap:12px; justify-content:center; }
@@ -248,10 +333,20 @@
         .modal-buttons button:hover { background:var(--br); }
         .modal-buttons button.active-choice { background:var(--ac); color:var(--bg); border-color:var(--ac); }
 
-        .splash { position:fixed; top:0; left:0; width:100%; height:100%; background:#000; display:flex; align-items:center; justify-content:center; z-index:10000; color:#fff; font-size:30px; font-weight:900; letter-spacing:4px; transition:opacity .5s; }
+        .splash {
+            position:fixed; top:0; left:0; width:100%; height:100%; background:#000; display:flex; align-items:center; justify-content:center; z-index:10000;
+            color:#fff; font-size:30px; font-weight:900; letter-spacing:4px; transition:opacity .5s;
+        }
         .splash.hidden { opacity:0; pointer-events:none; }
 
-        .audio-player { position:fixed; top:12px; right:12px; background:var(--bg2); border-radius:40px; padding:8px 14px; z-index:999; box-shadow:var(--sh); border:1px solid var(--br); display:flex; align-items:center; gap:12px; transform:translateY(-20px); opacity:0; transition:transform .3s ease, opacity .3s ease; pointer-events:none; }
+        .audio-player {
+            position:fixed; top:12px; right:12px; background:var(--bg2); border-radius:40px; padding:8px 14px;
+            z-index:999; box-shadow:var(--sh); border:1px solid var(--br);
+            display:flex; align-items:center; gap:12px;
+            transform:translateY(-20px); opacity:0;
+            transition:transform .3s ease, opacity .3s ease;
+            pointer-events:none;
+        }
         .audio-player.show { transform:translateY(0); opacity:1; pointer-events:auto; }
         .audio-player .ctrl { display:flex; align-items:center; gap:6px; }
         .audio-player .ctrl label { font-size:11px; color:var(--txt2); }
@@ -261,50 +356,103 @@
         .audio-player .close:hover { color:var(--txt); }
         .audio-player .playpause { background:0 0; border:0; color:var(--ac); font-size:18px; cursor:pointer; padding:0 2px; }
 
-        /* ===== ЧАТЫ: СПИСОК И АКТИВНЫЙ ЧАТ ===== */
+        /* ===== МОБИЛЬНЫЕ СТИЛИ ЧАТОВ ===== */
         .chats-layout { display:flex; height:100%; }
-        .chat-list-panel { width:260px; min-width:200px; background:var(--bg2); border-right:1px solid var(--br); display:flex; flex-direction:column; padding:8px; overflow-y:auto; }
-        .chat-list-panel .list-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .chat-list-panel {
+            width:260px; min-width:200px; background:var(--bg2); border-right:1px solid var(--br);
+            display:flex; flex-direction:column; padding:8px; overflow-y:auto;
+        }
+        .chat-list-panel .list-header {
+            display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;
+        }
         .chat-list-panel .list-header h3 { font-size:16px; color:var(--txt); }
-        .chat-list-panel .list-header button { background:var(--ac); border:none; color:var(--bg); border-radius:6px; padding:4px 10px; cursor:pointer; font-size:14px; }
-        .chat-list-item { padding:10px; border-radius:8px; cursor:pointer; margin-bottom:4px; color:var(--txt2); transition:background .15s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center; }
+        .chat-list-panel .list-header button {
+            background:var(--ac); border:none; color:var(--bg); border-radius:6px; padding:4px 10px; cursor:pointer; font-size:14px;
+        }
+        .chat-list-item {
+            padding:10px; border-radius:8px; cursor:pointer; margin-bottom:4px; color:var(--txt2); transition:background .15s;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+            display:flex; justify-content:space-between; align-items:center;
+        }
         .chat-list-item:hover { background:var(--bg3); }
         .chat-list-item.active { background:var(--bg4); color:var(--txt); font-weight:600; }
-        .chat-list-item .delete-chat-btn { background:none; border:none; color:var(--txt2); font-size:16px; cursor:pointer; padding:0 4px; opacity:0.6; transition:opacity 0.15s; }
+        .chat-list-item .delete-chat-btn {
+            background:none; border:none; color:var(--txt2); font-size:16px; cursor:pointer; padding:0 4px; opacity:0.6; transition:opacity 0.15s;
+        }
         .chat-list-item .delete-chat-btn:hover { opacity:1; color:#f44; }
         .chat-area { flex:1; display:flex; flex-direction:column; min-width:0; }
         .no-chat-selected { flex:1; display:flex; align-items:center; justify-content:center; color:var(--txt2); font-size:16px; }
 
-        /* Мобильный топбар чата */
-        .chat-mobile-topbar { display: none; align-items:center; padding: 8px 12px; background: var(--bg2); border-bottom: 1px solid var(--br); flex-shrink:0; }
-        .chat-mobile-topbar button { background: none; border: none; color: var(--ac); font-size: 20px; cursor: pointer; padding: 4px 8px; margin-right: 8px; line-height: 1; }
-        .chat-mobile-topbar .chat-title-mobile { font-weight: 600; color: var(--txt); font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-mobile-topbar {
+            display: none;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--bg2);
+            border-bottom: 1px solid var(--br);
+            flex-shrink: 0;
+        }
+        .chat-mobile-topbar button {
+            background: none;
+            border: none;
+            color: var(--ac);
+            font-size: 22px;
+            cursor: pointer;
+            padding: 4px 8px;
+            margin-right: 8px;
+            line-height: 1;
+        }
+        .chat-mobile-topbar .chat-title-mobile {
+            font-weight: 600;
+            color: var(--txt);
+            font-size: 16px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-        /* Адаптация под мобильные */
         @media (max-width: 700px) {
-            .chats-layout { flex-direction: column; }
-            .chat-list-panel { width: 100%; flex: 1; border-right: none; }
-            .chats-layout.mobile-chat-active .chat-list-panel { display: none; }
-            .chat-area { display: flex; }
-            .chats-layout:not(.mobile-chat-active) .chat-area { display: none; }
-            .chat-mobile-topbar { display: flex; }
-            .no-chat-selected { display: none; }
-            #activeChatContainer { flex: 1; }
+            .chats-layout {
+                flex-direction: column;
+            }
+            .chat-list-panel {
+                width: 100%;
+                flex: 1;
+                border-right: none;
+            }
+            .chats-layout.mobile-chat-active .chat-list-panel {
+                display: none;
+            }
+            .chat-area {
+                display: flex;
+            }
+            .chats-layout:not(.mobile-chat-active) .chat-area {
+                display: none;
+            }
+            .chat-mobile-topbar {
+                display: flex;
+            }
+            .no-chat-selected {
+                display: none;
+            }
+            #activeChatContainer {
+                flex: 1;
+            }
         }
-
         @media (min-width: 701px) {
-            .chat-mobile-topbar { display: none; }
-            .chats-layout.mobile-chat-active .chat-list-panel { display: flex; }
-            .chats-layout:not(.mobile-chat-active) .chat-area { display: flex; }
+            .chat-mobile-topbar {
+                display: none;
+            }
+            .chats-layout.mobile-chat-active .chat-list-panel {
+                display: flex;
+            }
+            .chats-layout:not(.mobile-chat-active) .chat-area {
+                display: flex;
+            }
         }
-
-        /* Прочие стили */
-        ::-webkit-scrollbar { width:3px; }
-        ::-webkit-scrollbar-track { background:var(--bg2); }
-        ::-webkit-scrollbar-thumb { background:var(--scr); border-radius:10px; }
     </style>
 </head>
 <body>
+    <!-- Splash -->
     <div class="splash" id="splash">арбузник</div>
 
     <!-- Модалка регистрации -->
@@ -317,6 +465,7 @@
         </div>
     </div>
 
+    <!-- Остальные модалки (без изменений) -->
     <div class="recording-modal" id="recordingModal">
         <div class="preview"><video id="recPreview" autoplay muted playsinline></video></div>
         <div class="timer" id="recTimer">0:00</div>
@@ -349,6 +498,8 @@
             <button class="apply" id="editorApply">Применить</button>
         </div>
     </div>
+
+    <!-- Меню -->
     <button class="menu-btn" id="menuBtn">
         <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
@@ -362,8 +513,10 @@
             <span class="dot online" id="menuStatusDot"></span>
             <span id="menuStatusText">Подключено</span>
         </div>
-        <div class="version-info">v.8.0 (мобильная версия)</div>
+        <div class="version-info">v.7.1 (звуки уведомлений)</div>
     </div>
+
+    <!-- Основной блок -->
     <div class="main" id="mainWrapper">
         <div class="topbar">
             <div class="title">арбузник</div>
@@ -374,6 +527,7 @@
             </div>
         </div>
         <div class="content">
+            <!-- Комната -->
             <div class="tab" id="roomTab">
                 <div class="room-tab" style="display:flex;flex-direction:column;height:100%">
                     <div class="video-grid" id="videoGrid">
@@ -396,6 +550,7 @@
                     </div>
                 </div>
             </div>
+            <!-- Чаты -->
             <div class="tab active" id="chatsTab">
                 <div class="chats-layout" id="chatsLayout">
                     <div class="chat-list-panel" id="chatListPanel">
@@ -439,6 +594,7 @@
                     </div>
                 </div>
             </div>
+            <!-- Настройки -->
             <div class="tab" id="settingsTab">
                 <div class="settings-tab">
                     <div class="setting-group">
@@ -495,12 +651,8 @@
             </div>
         </div>
     </div>
-    <div class="audio-player" id="audioPlayer">
-        <button class="playpause" id="playPauseBtn">▶</button>
-        <div class="ctrl"><label>Громк.</label><input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1"></div>
-        <div class="ctrl"><label>Скорость</label><select id="speedSelect"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></div>
-        <button class="close" id="closePlayerBtn">✕</button>
-    </div>
+
+    <!-- Контекстное меню и аудиоплеер -->
     <div class="context-menu" id="contextMenu">
         <div class="reactions-row">
             <span data-reaction="❤️">❤️</span>
@@ -513,6 +665,12 @@
         <button id="ctxDeleteSelf">🗑️ Удалить у себя</button>
         <button id="ctxDelete">🗑️ Удалить у всех</button>
         <button id="ctxReply">↩️ Ответить</button>
+    </div>
+    <div class="audio-player" id="audioPlayer">
+        <button class="playpause" id="playPauseBtn">▶</button>
+        <div class="ctrl"><label>Громк.</label><input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1"></div>
+        <div class="ctrl"><label>Скорость</label><select id="speedSelect"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></div>
+        <button class="close" id="closePlayerBtn">✕</button>
     </div>
 
     <script>
@@ -530,6 +688,7 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        // ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =====
         let currentChatId = null;
         let messagesRef = null;
         let myName = '';
@@ -543,11 +702,13 @@
         let replyTo = null, selectedMsgId = null;
         let unreadCount = 0, isChatActive = true, scheduledTimers = [], isScrolledUp = false;
         let chats = [];
+        let editorRotation = 0;
 
         const STICKERS_KEY = 'mango_stickers';
         const MY_COLOR_KEY = 'mango_mycolor';
         const BG_KEY = 'mango_chatbg';
 
+        // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
         function getStickers() { try { return JSON.parse(localStorage.getItem(STICKERS_KEY)) || []; } catch { return []; } }
         function saveStickers(stickers) { localStorage.setItem(STICKERS_KEY, JSON.stringify(stickers)); }
         function getMyColor() { return localStorage.getItem(MY_COLOR_KEY) || '#ff00c8'; }
@@ -583,15 +744,14 @@
         function applyTheme(light) {
             document.documentElement.classList.toggle('light', light);
             localStorage.setItem('lightTheme', light);
-            if (light) {
-                document.querySelector('.chat-messages').style.background = '#f5f5f5';
-                document.querySelectorAll('.bg-selector button').forEach(btn => btn.classList.toggle('active-bg', btn.dataset.bg === '#f5f5f5'));
-                localStorage.setItem(BG_KEY, '#f5f5f5');
-            } else {
-                document.querySelector('.chat-messages').style.background = '#0a0a0a';
-                document.querySelectorAll('.bg-selector button').forEach(btn => btn.classList.toggle('active-bg', btn.dataset.bg === '#0a0a0a'));
-                localStorage.setItem(BG_KEY, '#0a0a0a');
+            const chatBg = document.querySelector('.chat-messages');
+            if (chatBg) {
+                chatBg.style.background = light ? '#f5f5f5' : '#0a0a0a';
             }
+            document.querySelectorAll('.bg-selector button').forEach(btn => {
+                btn.classList.toggle('active-bg', btn.dataset.bg === (light ? '#f5f5f5' : '#0a0a0a'));
+            });
+            localStorage.setItem(BG_KEY, light ? '#f5f5f5' : '#0a0a0a');
         }
 
         function updateClock() {
@@ -601,6 +761,28 @@
         updateClock();
         setInterval(updateClock, 60000);
 
+        // ===== ЗВУК УВЕДОМЛЕНИЯ =====
+        function playMessageSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(1100, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.2);
+                if (navigator.vibrate) navigator.vibrate(100);
+            } catch (e) {
+                // без звука
+            }
+        }
+
+        // ===== РЕГИСТРАЦИЯ =====
         window.addEventListener('load', () => {
             setTimeout(() => {
                 document.getElementById('splash').classList.add('hidden');
@@ -633,6 +815,7 @@
             document.getElementById('menuStatusText').textContent = text;
         }
 
+        // ===== МЕНЮ =====
         function toggleMenu(open) {
             const menu = document.getElementById('sideMenu');
             const overlay = document.getElementById('menuOverlay');
@@ -658,6 +841,7 @@
             });
         });
 
+        // ===== ОЧИСТКА ИСТОРИИ =====
         function clearHistory() {
             if (currentChatId) {
                 if (confirm('Удалить всю историю этого чата?')) {
@@ -672,16 +856,15 @@
         document.addEventListener('click', () => document.getElementById('moreMenu').classList.remove('active'));
         document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
 
+        // ===== НАСТРОЙКИ =====
         document.getElementById('zoomSlider').addEventListener('input', (e) => applyZoom(e.target.value));
         document.getElementById('zoomDefaultBtn').addEventListener('click', () => { document.getElementById('zoomSlider').value = 100; applyZoom(100); });
         document.getElementById('lightThemeToggle').addEventListener('change', (e) => applyTheme(e.target.checked));
-
         document.getElementById('myColorPicker').addEventListener('input', (e) => {
             myColor = e.target.value;
             localStorage.setItem(MY_COLOR_KEY, myColor);
             document.querySelectorAll('.msg.me .sender').forEach(el => el.style.color = myColor);
         });
-
         document.querySelectorAll('.bg-selector button').forEach(btn => {
             btn.addEventListener('click', () => {
                 const bg = btn.dataset.bg;
@@ -691,7 +874,6 @@
                 btn.classList.add('active-bg');
             });
         });
-
         document.getElementById('changeNameBtn').addEventListener('click', () => {
             const newName = document.getElementById('nicknameInput').value.trim();
             if (newName) {
@@ -702,6 +884,7 @@
             }
         });
 
+        // ===== ЧАТЫ: СПИСОК И УПРАВЛЕНИЕ =====
         function loadChatList() {
             database.ref('chats').on('value', snapshot => {
                 const data = snapshot.val();
@@ -792,7 +975,6 @@
         }
 
         document.getElementById('backToChatListBtn').addEventListener('click', backToChatList);
-
         document.getElementById('createChatBtn').addEventListener('click', () => {
             const name = prompt('Название нового чата:');
             if (name) {
@@ -814,11 +996,13 @@
                         messagesRef = null;
                         document.getElementById('noChat').style.display = 'block';
                         document.getElementById('activeChatContainer').style.display = 'none';
+                        document.getElementById('chatsLayout').classList.remove('mobile-chat-active');
                     }
                 })
                 .catch(err => console.warn('Ошибка удаления чата:', err));
         }
 
+        // ===== ПОДПИСКА НА СООБЩЕНИЯ (с звуком) =====
         function subscribeToMessages() {
             if (!messagesRef) return;
             messagesRef.on('child_added', (snapshot) => {
@@ -826,11 +1010,16 @@
                 const key = snapshot.key;
                 if (document.querySelector(`[data-msg-id="${key}"]`)) return;
                 const isMe = (msg.sender === myName);
+
                 if (msg.type === 'text') addChatMessage(msg.text, msg.sender, msg.time, key, msg.replyTo, msg.reactions, 'text', isMe);
                 else if (msg.type === 'voice') displayAudioMessage(msg.sender, msg.data, msg.time, key, isMe);
                 else if (msg.type === 'videoMsg') displayVideoMessage(msg.sender, msg.data, msg.time, key, isMe);
                 else if (msg.type === 'sticker') displayStickerMessage(msg.sender, msg.data, key, isMe);
                 else if (msg.type === 'file') displayFileMessage(msg.sender, msg.data, msg.name, msg.mime, msg.size, key, isMe);
+
+                if (!isMe) {
+                    playMessageSound();
+                }
             });
         }
 
@@ -845,6 +1034,7 @@
             newRef.set(sendData).catch(err => console.warn('Ошибка отправки:', err));
         }
 
+        // ===== ОТПРАВКА СООБЩЕНИЙ =====
         function sendTextMessage() {
             const text = document.getElementById('chatInput').value.trim();
             if (!text) return;
@@ -856,6 +1046,7 @@
         document.getElementById('chatInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); sendTextMessage(); } });
         document.getElementById('sendBtn').addEventListener('click', sendTextMessage);
 
+        // ===== ОТОБРАЖЕНИЕ СООБЩЕНИЙ =====
         function addChatMessage(text, sender, time, id, replyTo, reactions, type, isMe) {
             const div = document.createElement('div');
             div.className = 'msg';
@@ -997,6 +1188,7 @@
             addMessageInteractions(div, id, sender);
         }
 
+        // ===== ВЗАИМОДЕЙСТВИЯ С СООБЩЕНИЯМИ (reply, контекстное меню, реакции) =====
         function addMessageInteractions(div, id, sender) {
             let pressTimer = null;
             div.addEventListener('touchstart', (e) => {
@@ -1139,6 +1331,7 @@
             }
         });
 
+        // ===== РЕДАКТОР ИЗОБРАЖЕНИЙ =====
         function openImageEditor(file) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -1150,6 +1343,7 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0);
                     document.getElementById('imageEditor').classList.add('active');
+                    editorRotation = 0;
                 };
                 img.src = e.target.result;
             };
@@ -1186,6 +1380,7 @@
             }, 'image/jpeg');
         });
 
+        // ===== ОТПРАВКА ФАЙЛОВ =====
         async function sendFile(file, mime) {
             const blob = await file.arrayBuffer().then(buf => new Blob([buf], { type: file.type }));
             const base64 = await blobToBase64(blob);
@@ -1217,6 +1412,7 @@
             e.target.value = '';
         });
 
+        // ===== ГОЛОСОВЫЕ СООБЩЕНИЯ =====
         async function startVoiceRecording() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1244,13 +1440,14 @@
                     for (let i=0; i<7; i++) { const s = document.createElement('span'); waveElement.appendChild(s); }
                     document.getElementById('voiceBtn').parentNode.insertBefore(waveElement, document.getElementById('voiceBtn').nextSibling);
                 }
-            } catch(e) { alert('Ошибка доступа к микрофону для записи: '+e.message); }
+            } catch(e) { alert('Ошибка доступа к микрофону: '+e.message); }
         }
         function stopVoiceRecording() {
             if (voiceRecorder && voiceRecorder.state !== 'inactive') { voiceRecorder.stop(); isRecordingVoice = false; }
         }
         document.getElementById('voiceBtn').addEventListener('click', () => { if (isRecordingVoice) stopVoiceRecording(); else startVoiceRecording(); });
 
+        // ===== КРУЖКИ (видеосообщения) =====
         function openRecorder() {
             if (recIsRecording) return;
             (async () => {
@@ -1325,6 +1522,7 @@
         });
         document.getElementById('circleBtn').addEventListener('click', openRecorder);
 
+        // ===== СТИКЕРЫ =====
         function renderStickers() {
             const stickers = getStickers();
             const panel = document.getElementById('stickerPanel');
@@ -1403,6 +1601,7 @@
             e.target.value = '';
         });
 
+        // ===== СКРОЛЛ =====
         function scrollToBottom() { document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight; }
         function autoScrollIfNeeded() { if (!isScrolledUp) scrollToBottom(); }
         document.getElementById('chatMessages').addEventListener('scroll', () => {
@@ -1414,6 +1613,7 @@
         });
         document.getElementById('scrollDownBtn').addEventListener('click', () => { scrollToBottom(); document.getElementById('scrollDownBtn').classList.remove('show'); });
 
+        // ===== АУДИОПЛЕЕР =====
         function openAudioPlayer(audioElement) {
             currentAudio = audioElement;
             document.getElementById('playPauseBtn').textContent = audioElement.paused ? '▶' : '⏸';
@@ -1431,6 +1631,7 @@
         document.getElementById('closePlayerBtn').addEventListener('click', () => { if (currentAudio) { currentAudio.pause(); currentAudio = null; } document.getElementById('audioPlayer').classList.remove('show'); });
         document.addEventListener('ended', (e) => { if (e.target === currentAudio) document.getElementById('playPauseBtn').textContent = '▶'; }, true);
 
+        // ===== ВИДЕОЗВОНКИ =====
         async function initVideoChat() {
             if (!localStream) {
                 try {
@@ -1513,6 +1714,7 @@
             });
         }
 
+        // ===== ОТЛОЖЕННАЯ ОТПРАВКА =====
         document.getElementById('scheduleCancel').addEventListener('click', () => document.getElementById('scheduleDialog').classList.remove('active'));
         document.getElementById('scheduleConfirm').addEventListener('click', () => {
             const timeStr = document.getElementById('scheduleTime').value;
@@ -1536,6 +1738,7 @@
             alert(`Сообщение будет отправлено в ${target.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`);
         });
 
+        // ===== PEERJS =====
         function initPeer() {
             const uniqueId = ROOM_ID + '-' + Date.now() + '-' + Math.random().toString(36).substr(2,6);
             peer = new Peer(uniqueId, {
@@ -1585,6 +1788,7 @@
             });
         }
 
+        // ===== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ =====
         function initApp() {
             document.getElementById('localLabel').textContent = myName;
             document.getElementById('nicknameInput').value = myName;
@@ -1597,7 +1801,8 @@
             myColor = getMyColor();
             document.getElementById('myColorPicker').value = myColor;
             const bg = getChatBg();
-            document.querySelector('.chat-messages').style.background = bg;
+            const chatBgEl = document.querySelector('.chat-messages');
+            if (chatBgEl) chatBgEl.style.background = bg;
             document.querySelectorAll('.bg-selector button').forEach(btn => btn.classList.toggle('active-bg', btn.dataset.bg === bg));
             renderStickers();
             renderStickerPreview();
@@ -1606,6 +1811,16 @@
             if (!peer) initPeer();
         }
 
+        window.addEventListener('beforeunload', () => {
+            if (localStream) localStream.getTracks().forEach(t => t.stop());
+            if (screenStream) screenStream.getTracks().forEach(t => t.stop());
+            if (peer) peer.destroy();
+            if (voiceRecorder && voiceRecorder.state !== 'inactive') voiceRecorder.stop();
+            if (recRecorder && recRecorder.state !== 'inactive') recRecorder.stop();
+            scheduledTimers.forEach(t => clearTimeout(t));
+        });
+
+        // обработчик ресайза для мобильных
         window.addEventListener('resize', () => {
             const isMobile = window.innerWidth <= 700;
             const layout = document.getElementById('chatsLayout');
@@ -1619,15 +1834,6 @@
                     document.getElementById('activeChatContainer').style.display = 'none';
                 }
             }
-        });
-
-        window.addEventListener('beforeunload', () => {
-            if (localStream) localStream.getTracks().forEach(t => t.stop());
-            if (screenStream) screenStream.getTracks().forEach(t => t.stop());
-            if (peer) peer.destroy();
-            if (voiceRecorder && voiceRecorder.state !== 'inactive') voiceRecorder.stop();
-            if (recRecorder && recRecorder.state !== 'inactive') recRecorder.stop();
-            scheduledTimers.forEach(t => clearTimeout(t));
         });
     </script>
 </body>
