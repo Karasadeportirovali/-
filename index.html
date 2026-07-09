@@ -9,13 +9,12 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        /* ===== ВСЕ СТИЛИ (сжато, но полностью) ===== */
+        /* ===== ОБЩИЕ СТИЛИ ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg: #0a0a0a; --bg2: #141414; --bg3: #1c1c1c; --bg4: #252525; --bg5: #2e2e2e;
             --br: #3a3a3a; --txt: #f0f0f0; --txt2: #b0b0b0; --txt3: #777;
-            --ac: #d0d0d0; --ach: #aaa; --sh: 0 2px 10px rgba(0,0,0,.6);
-            --msg-other-bg: #1a2a3a; --chat-bg: #0a0a0a;
+            --ac: #d0d0d0; --sh: 0 2px 10px rgba(0,0,0,.6);
             --msg-bg-me: #2e2e2e; --msg-bg-other: #1a2a3a;
             --menu-bg: #1a1a1a; --menu-border: #2a2a2a; --menu-text: #ddd;
             --menu-hover: #2a2a2a; --menu-active: #333;
@@ -23,8 +22,7 @@
         .light {
             --bg: #f5f5f5; --bg2: #e8e8e8; --bg3: #d8d8d8; --bg4: #d0d0d0; --bg5: #c0c0c0;
             --br: #b0b0b0; --txt: #1a1a1a; --txt2: #444; --txt3: #777;
-            --ac: #222; --ach: #555; --sh: 0 2px 10px rgba(0,0,0,.15);
-            --msg-other-bg: #fff8e7; --chat-bg: #f5f5f5;
+            --ac: #222; --sh: 0 2px 10px rgba(0,0,0,.15);
             --msg-bg-me: #fff8e7; --msg-bg-other: #fff8e7;
             --menu-bg: #f0f0f0; --menu-border: #ddd; --menu-text: #222;
             --menu-hover: #e0e0e0; --menu-active: #d0d0d0;
@@ -95,14 +93,14 @@
         .login-screen .box .toggle-link { color:var(--txt2); font-size:14px; text-align:center; margin-top:12px; cursor:pointer; }
         .login-screen .box .toggle-link:hover { color:var(--txt); }
 
-        /* ===== ОБЩИЙ ЧАТ (ГРУППА) ===== */
+        /* ===== ЧАТ (ОБЩИЙ) ===== */
         .chat-messages {
-            flex:1; overflow-y:auto; padding:6px 8px; background:var(--chat-bg); border:none; border-radius:0; margin-bottom:0;
+            flex:1; overflow-y:auto; padding:6px 8px; background:var(--bg); border:none; border-radius:0; margin-bottom:0;
             transition:background .3s; display:flex; flex-direction:column; gap:2px; scrollbar-width:none; -ms-overflow-style:none;
             position:relative;
         }
         .chat-messages::-webkit-scrollbar { display:none; }
-        .chat-messages .msg { max-width:70%; padding:5px 12px 16px 12px; border-radius:14px; word-wrap:break-word; position:relative; animation:msgSlide .3s ease; margin-bottom:2px; align-self:flex-end !important; background:var(--msg-bg-me); border:1px solid var(--br); }
+        .chat-messages .msg { max-width:75%; padding:5px 12px 16px 12px; border-radius:14px; word-wrap:break-word; position:relative; animation:msgSlide .3s ease; margin-bottom:2px; align-self:flex-end !important; background:var(--msg-bg-me); border:1px solid var(--br); }
         .chat-messages .msg.other { align-self:flex-start !important; background:var(--msg-bg-other); }
         .chat-messages .msg.me { align-self:flex-end !important; background:var(--msg-bg-me); border:1px solid var(--br); }
         .chat-messages .msg .sender { font-size:11px; color:var(--txt2); margin-bottom:2px; font-weight:600; }
@@ -222,7 +220,7 @@
         }
         .chat-window .header .back { font-size:24px; cursor:pointer; color:var(--txt2); margin-right:12px; }
         .chat-window .header .title { flex:1; font-weight:600; }
-        .chat-window .chat-messages { flex:1; overflow-y:auto; padding:8px; display:flex; flex-direction:column; gap:4px; background:var(--chat-bg); }
+        .chat-window .chat-messages { flex:1; overflow-y:auto; padding:8px; display:flex; flex-direction:column; gap:4px; background:var(--bg); }
         .chat-window .input-area { display:flex; gap:8px; padding:8px; background:var(--bg2); border-top:1px solid var(--br); }
         .chat-window .input-area input { flex:1; padding:8px 14px; border-radius:40px; border:1px solid var(--br); background:var(--bg3); color:var(--txt); outline:none; }
         .chat-window .input-area button { padding:8px 16px; border-radius:40px; border:none; background:#4a6d8a; color:#fff; cursor:pointer; }
@@ -308,7 +306,7 @@
         <button class="menu-item" data-tab="settings"><span class="icon">⚙</span> Настройки</button>
         <button class="menu-item" id="logoutBtn"><span class="icon">🚪</span> Выйти</button>
         <div class="status-indicator"><span class="dot online" id="menuStatusDot"></span><span id="menuStatusText">Подключено</span></div>
-        <div class="version-info">v.8.0 (групповой чат + видео)</div>
+        <div class="version-info">v.9.0 (групповой чат + видео + личные)</div>
     </div>
 
     <!-- ОСНОВНОЙ БЛОК -->
@@ -317,7 +315,7 @@
             <div class="title">арбузник</div>
             <div class="datetime" id="datetime"></div>
             <button class="more-btn" id="moreBtn">⋮</button>
-            <div class="more-menu" id="moreMenu"><button id="moreClearHistory">🗑️ Очистить историю (группа)</button></div>
+            <div class="more-menu" id="moreMenu"><button id="moreClearHistory">🗑️ Очистить историю (общий чат)</button></div>
         </div>
         <div class="content">
             <!-- Общий чат -->
@@ -392,7 +390,7 @@
                         </div>
                     </div>
                     <div class="setting-group">
-                        <label>🗑️ Очистить историю (группа)</label>
+                        <label>🗑️ Очистить историю (общий чат)</label>
                         <button class="btn-danger" id="clearGroupHistoryBtn">Очистить</button>
                     </div>
                 </div>
@@ -462,7 +460,7 @@
         let privateChatListeners = [];
         let isLoginMode = true;
         let myColor = '#ff00c8';
-        let myStream = null; // для видео
+        let localStream = null; // для видео
         let peer = null;
         let roomPeers = {}; // peerId -> { call, stream, videoElement }
         let isInRoom = false;
@@ -648,8 +646,11 @@
         logoutBtn.addEventListener('click', () => {
             auth.signOut();
             if(peer) { peer.destroy(); peer=null; }
-            if(myStream) { myStream.getTracks().forEach(t=>t.stop()); myStream=null; }
+            if(localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
             isInRoom = false;
+            // очищаем комнатные видео
+            videoGrid.innerHTML = '';
+            roomPeers = {};
         });
 
         // ============================================================
@@ -673,8 +674,6 @@
             // Стикеры
             renderStickers(groupStickerPanel);
             renderStickerPreview();
-            // Автоматически подключаемся к комнате при переключении
-            // (комната инициализируется при первом переходе)
         }
 
         function loadSettings() {
@@ -717,7 +716,7 @@
 
         function subscribeGroupChat() {
             const ref = database.ref('groupMessages');
-            ref.off(); // отписываемся от старых
+            ref.off();
             groupMessagesEl.innerHTML = '';
             // загружаем существующие
             ref.orderByChild('time').once('value', snap => {
@@ -729,6 +728,7 @@
                         appendGroupMessage(msg, key);
                     });
                 }
+                scrollToBottomGroup();
             });
             // слушаем новые
             ref.on('child_added', snap => {
@@ -737,10 +737,11 @@
                 if(document.querySelector(`[data-msg-id="${key}"]`)) return;
                 appendGroupMessage(msg, key);
                 if(!isGroupTabActive()) {
-                    // если вкладка не активна, увеличиваем счётчик (не реализован)
+                    // можно добавить счётчик непрочитанных
                 }
+                scrollToBottomGroup();
             });
-            // слушаем изменения (для реакций)
+            // слушаем изменения (реакции)
             ref.on('child_changed', snap => {
                 const msg = snap.val();
                 const key = snap.key;
@@ -786,7 +787,6 @@
                 const duration = Math.round(blob.size/16000);
                 const durStr = `${Math.floor(duration/60)}:${(duration%60).toString().padStart(2,'0')}`;
                 contentHtml = `<div class="audio-preview"><button class="play-audio">▶</button><span class="duration">${durStr}</span></div>`;
-                // отложим инициализацию аудио
                 div._audioUrl = url;
             } else if(msg.type === 'videoMsg') {
                 const blob = base64ToBlob(msg.data, 'video/mp4');
@@ -825,7 +825,7 @@
             }
 
             groupMessagesEl.appendChild(div);
-            // обработка аудио/видео после добавления
+            // обработка аудио/видео
             if(div._audioUrl) {
                 const btn = div.querySelector('.play-audio');
                 const audio = new Audio(div._audioUrl);
@@ -847,32 +847,27 @@
                     });
                 }
             }
-            // обработка взаимодействий (контекстное меню)
+            // взаимодействия (контекстное меню упрощённо через confirm)
             addMessageInteractions(div, key, msg.sender);
-            scrollToBottomGroup();
         }
 
         function addMessageInteractions(el, id, sender) {
-            // контекстное меню (упрощённо – по клику)
             el.addEventListener('click', (e) => {
                 if(e.target.closest('.reactions') || e.target.closest('button') || e.target.closest('video') || e.target.closest('audio')) return;
-                // показываем меню (реализуем через нативные alert для простоты)
-                const action = confirm(`Сообщение от ${sender}\n1. Ответить\n2. Копировать текст\n3. Удалить у себя (только свои)\n4. Удалить у всех (только свои)`);
+                const action = prompt(`Сообщение от ${sender}\nВведите номер действия:\n1 - Ответить\n2 - Копировать текст\n3 - Удалить у себя (только свои)\n4 - Удалить у всех (только свои)`);
                 if(action === null) return;
-                // реализуем через простой prompt, так как контекстное меню требует большого кода
-                // для краткости оставлю базовые функции
-                if(action === 1) {
+                if(action === '1') {
                     const text = el.querySelector('.content')?.textContent || '[медиа]';
                     groupReplyTo = { id, sender, text };
                     groupReplyIndicator.style.display = 'flex';
                     groupReplyText.textContent = `${sender}: ${text}`;
-                } else if(action === 2) {
+                } else if(action === '2') {
                     const text = el.querySelector('.content')?.textContent || '';
                     if(text) navigator.clipboard.writeText(text).then(()=>alert('Скопировано')).catch(()=>{});
-                } else if(action === 3 && sender === currentUser.username) {
-                    // удалить у себя (удаляем из DOM, но не из базы)
+                } else if(action === '3' && sender === currentUser.username) {
+                    // удалить только в DOM
                     el.remove();
-                } else if(action === 4 && sender === currentUser.username) {
+                } else if(action === '4' && sender === currentUser.username) {
                     if(confirm('Удалить у всех?')) {
                         database.ref('groupMessages/'+id).remove().catch(()=>{});
                     }
@@ -889,7 +884,6 @@
         }
 
         function setupGroupChatUI() {
-            // Отправка текста
             groupSendBtn.addEventListener('click', sendGroupMessage);
             groupInput.addEventListener('keydown', (e) => {
                 if(e.key === 'Enter') { e.preventDefault(); sendGroupMessage(); }
@@ -902,7 +896,7 @@
                     }, 2000);
                 }
             });
-            // Индикатор печатания
+            // индикатор печатания других
             database.ref('groupTyping').on('value', snap => {
                 const val = snap.val();
                 if(val && val.user && val.user !== currentUser.username) {
@@ -911,9 +905,7 @@
                     groupTyping.style.display = 'none';
                 }
             });
-            // Отмена ответа
             groupCancelReply.addEventListener('click', ()=>{ groupReplyTo = null; groupReplyIndicator.style.display='none'; });
-            // Кнопка "ещё"
             moreClearHistory.addEventListener('click', ()=>{
                 if(confirm('Очистить всю историю общего чата?')) {
                     database.ref('groupMessages').remove().catch(()=>{});
@@ -925,7 +917,6 @@
                     database.ref('groupMessages').remove().catch(()=>{});
                 }
             });
-            // Вложения, голос, кружок – аналогично старому коду, но с привязкой к группе
             groupAttachBtn.addEventListener('click', ()=>groupFileInput.click());
             groupFileInput.addEventListener('change', async (e)=>{
                 const files = e.target.files;
@@ -933,7 +924,7 @@
                 for(const file of files) {
                     const blob = await file.arrayBuffer().then(buf=>new Blob([buf], {type:file.type}));
                     const base64 = await blobToBase64(blob);
-                    const msgData = {
+                    await database.ref('groupMessages').push({
                         type: 'file',
                         data: base64,
                         name: file.name,
@@ -942,8 +933,7 @@
                         replyTo: groupReplyTo || null,
                         sender: currentUser.username,
                         time: new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })
-                    };
-                    await database.ref('groupMessages').push(msgData);
+                    });
                     vibrate();
                 }
                 groupFileInput.value = '';
@@ -951,19 +941,14 @@
                 groupReplyIndicator.style.display='none';
             });
             // Стикеры
-            document.getElementById('groupStickerPanel').addEventListener('click', (e) => {
+            groupStickerPanel.addEventListener('click', (e) => {
                 const img = e.target.closest('img');
                 if(img) {
-                    const base64 = img.src;
-                    sendGroupSticker(base64);
+                    sendGroupSticker(img.src);
                     groupStickerPanel.classList.remove('active');
                 }
             });
-            // Смайлик/карандаш для стикеров (заглушка)
-            document.querySelector('#groupTab .chat-input-area .circle-btn').addEventListener('click', ()=>{
-                groupStickerPanel.classList.toggle('active');
-            });
-            // Голосовые (упрощённо)
+            groupCircleBtn.addEventListener('click', ()=>openRecorder('group'));
             groupVoiceBtn.addEventListener('click', ()=>{
                 if(!navigator.mediaDevices) return alert('WebRTC не поддерживается');
                 navigator.mediaDevices.getUserMedia({ audio:true }).then(async stream => {
@@ -973,24 +958,21 @@
                     recorder.onstop = async () => {
                         const blob = new Blob(chunks, {type:'audio/ogg'});
                         const base64 = await blobToBase64(blob);
-                        const msgData = {
+                        await database.ref('groupMessages').push({
                             type: 'voice',
                             data: base64,
                             replyTo: groupReplyTo || null,
                             sender: currentUser.username,
                             time: new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })
-                        };
-                        await database.ref('groupMessages').push(msgData);
+                        });
                         stream.getTracks().forEach(t=>t.stop());
                         vibrate();
                     };
                     recorder.start();
-                    setTimeout(() => recorder.stop(), 5000); // запись 5 сек
+                    setTimeout(() => recorder.stop(), 5000); // 5 сек
                 }).catch(()=>alert('Нет доступа к микрофону'));
             });
-            // Кружок – отдельная модалка
-            groupCircleBtn.addEventListener('click', ()=>openRecorder('group'));
-            // Прокрутка вниз
+            // прокрутка
             groupMessagesEl.addEventListener('scroll', ()=>{
                 const threshold = 100;
                 const isBottom = groupMessagesEl.scrollTop >= groupMessagesEl.scrollHeight - groupMessagesEl.clientHeight - threshold;
@@ -1002,14 +984,13 @@
         function sendGroupMessage() {
             const text = groupInput.value.trim();
             if(!text) return;
-            const msgData = {
+            database.ref('groupMessages').push({
                 type: 'text',
                 text: text,
                 replyTo: groupReplyTo || null,
                 sender: currentUser.username,
                 time: new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })
-            };
-            database.ref('groupMessages').push(msgData);
+            });
             groupInput.value = '';
             groupReplyTo = null;
             groupReplyIndicator.style.display='none';
@@ -1017,14 +998,13 @@
         }
 
         function sendGroupSticker(base64) {
-            const msgData = {
+            database.ref('groupMessages').push({
                 type: 'sticker',
                 data: base64,
                 replyTo: groupReplyTo || null,
                 sender: currentUser.username,
                 time: new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })
-            };
-            database.ref('groupMessages').push(msgData);
+            });
             groupReplyTo = null;
             groupReplyIndicator.style.display='none';
             vibrate();
@@ -1036,6 +1016,7 @@
         function loadPrivateChats() {
             if(!currentUser) return;
             const ref = database.ref('chats');
+            ref.off();
             ref.orderByChild('participants/'+currentUser.uid).equalTo(true).on('value', snap => {
                 chatListEl.innerHTML = '';
                 const data = snap.val();
@@ -1071,6 +1052,7 @@
                 privateChatListeners = [];
             }
             const msgsRef = database.ref('chats/'+chatId+'/messages');
+            msgsRef.off();
             msgsRef.orderByChild('time').on('child_added', snap => {
                 const msg = snap.val();
                 const isMe = (msg.sender === currentUser.username);
@@ -1098,7 +1080,6 @@
             });
             privateSendBtn.addEventListener('click', sendPrivateMessage);
             privateInput.addEventListener('keydown', e => { if(e.key==='Enter') { e.preventDefault(); sendPrivateMessage(); } });
-            // Создание чата
             createChatBtn.addEventListener('click', ()=>{
                 createChatModal.classList.add('active');
                 searchUserInput.value = '';
@@ -1123,7 +1104,6 @@
                         div.addEventListener('click', ()=>{
                             const selectedUid = uid;
                             const selectedName = username;
-                            // Проверяем, есть ли уже чат
                             const chatsRef = database.ref('chats');
                             chatsRef.orderByChild('participants/'+currentUser.uid).equalTo(true).once('value', snap2 => {
                                 let existing = null;
@@ -1139,7 +1119,6 @@
                                     openPrivateChat(existing, selectedName);
                                     return;
                                 }
-                                // Создаём новый
                                 const newRef = database.ref('chats').push();
                                 newRef.set({
                                     participants: {
@@ -1166,8 +1145,7 @@
             const text = privateInput.value.trim();
             if(!text || !currentPrivateChatId) return;
             const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-            const msgRef = database.ref('chats/'+currentPrivateChatId+'/messages').push();
-            msgRef.set({
+            database.ref('chats/'+currentPrivateChatId+'/messages').push({
                 sender: currentUser.username,
                 text: text,
                 time: time
@@ -1182,12 +1160,10 @@
         // ============================================================
         // 8. ВИДЕОЧАТ (ГРУППОВОЙ)
         // ============================================================
-        let localStream = null;
         let roomRef = null;
         let roomParticipantsRef = null;
 
         function setupVideoUI() {
-            // При переключении на вкладку комнаты – инициализируем
             const roomTab = document.getElementById('roomTab');
             const observer = new MutationObserver(() => {
                 if(roomTab.classList.contains('active')) {
@@ -1195,10 +1171,8 @@
                 }
             });
             observer.observe(roomTab, { attributes: true, attributeFilter: ['class'] });
-            // Если уже активна – инициализируем
             if(roomTab.classList.contains('active')) initRoom();
 
-            // Кнопки управления
             camBtn.addEventListener('click', ()=>{
                 if(!localStream) return;
                 const track = localStream.getVideoTracks()[0];
@@ -1225,7 +1199,6 @@
                     const oldTrack = localStream.getVideoTracks()[0];
                     if(oldTrack) localStream.removeTrack(oldTrack);
                     localStream.addTrack(videoTrack);
-                    // обновить все отправляемые потоки
                     for(const pid in roomPeers) {
                         const sender = roomPeers[pid].call.peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
                         if(sender) sender.replaceTrack(videoTrack);
@@ -1233,7 +1206,6 @@
                     screenBtn.classList.add('active');
                     screenBtn.textContent = '🖥️ Остановить';
                     videoTrack.onended = ()=>{
-                        // вернуть камеру
                         navigator.mediaDevices.getUserMedia({ video:true, audio:true }).then(cam => {
                             const newTrack = cam.getVideoTracks()[0];
                             const old = localStream.getVideoTracks()[0];
@@ -1262,14 +1234,12 @@
                     config: {
                         iceServers: [
                             { urls: 'stun:stun.l.google.com:19302' },
-                            { urls: 'stun:stun1.l.google.com:19302' },
                             { urls: ['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'], username:'openrelayproject', credential:'openrelayproject' }
                         ]
                     }
                 });
                 peer.on('error', (err)=>console.warn('Peer error:', err));
             }
-            // Получаем локальный поток
             if(!localStream) {
                 try {
                     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -1277,10 +1247,9 @@
                     micBtn.classList.add('active');
                 } catch(e) { alert('Ошибка доступа к камере: '+e.message); return; }
             }
-            // Добавляем своё видео в сетку
+            // добавляем своё видео
             addLocalVideo();
 
-            // Подключаемся к комнате
             if(peer.id) {
                 joinRoom(peer.id);
             } else {
@@ -1288,7 +1257,6 @@
                     joinRoom(id);
                 });
             }
-            // Слушаем входящие звонки
             peer.on('call', (call) => {
                 if(!localStream) return;
                 call.answer(localStream);
@@ -1344,8 +1312,6 @@
             card.appendChild(placeholder);
             card.appendChild(label);
             videoGrid.appendChild(card);
-            // Загрузим имя участника из Firebase (по peerId? проще хранить соответствие)
-            // Можно запросить из roomParticipants
             database.ref('roomParticipants').child(peerId).child('username').once('value', snap => {
                 if(snap.exists()) label.textContent = snap.val();
             });
@@ -1365,7 +1331,6 @@
 
         function joinRoom(peerId) {
             if(!peer) return;
-            // Добавляем себя в список участников
             roomRef = database.ref('roomParticipants');
             roomParticipantsRef = roomRef.child(peerId);
             roomParticipantsRef.set({
@@ -1376,7 +1341,6 @@
                 const pid = snap.key;
                 if(pid === peerId) return;
                 if(roomPeers[pid]) return;
-                // Создаём вызов
                 const call = peer.call(pid, localStream);
                 const videoEl = createRemoteVideo(pid);
                 call.on('stream', (stream) => {
@@ -1405,26 +1369,23 @@
                 roomParticipantsRef.remove().catch(()=>{});
                 roomParticipantsRef = null;
             }
-            // Закрываем все вызовы
             for(const pid in roomPeers) {
                 roomPeers[pid].call.close();
             }
             roomPeers = {};
-            // Удаляем все видео, кроме локального
             const cards = videoGrid.querySelectorAll('.video-card');
             for(const card of cards) {
                 if(card.id !== 'localVideoCard') card.remove();
             }
             isInRoom = false;
-            // Отключаем peer? нет, оставляем для возможности переподключения
         }
 
         // ============================================================
-        // 9. ЗАПИСЬ КРУЖКА (общая)
+        // 9. ЗАПИСЬ КРУЖКА
         // ============================================================
         let recMediaStream = null, recRecorder = null, recRecordedChunks = [], recIsRecording = false, recTimerInterval = null, recSeconds = 0;
         let currentFacingMode = 'user';
-        let recTarget = 'group'; // куда отправить
+        let recTarget = 'group';
 
         function openRecorder(target) {
             recTarget = target;
@@ -1441,15 +1402,12 @@
                     recTimer.textContent = '0:00';
                     recSeconds = 0;
                     recRecordedChunks = [];
-                    recIsRecording = false;
-                    // start recording
                     recRecorder = new MediaRecorder(recMediaStream);
                     recRecordedChunks = [];
                     recRecorder.ondataavailable = e => { if(e.data.size>0) recRecordedChunks.push(e.data); };
                     recRecorder.onstop = async ()=>{
                         const blob = new Blob(recRecordedChunks, { type:'video/mp4' });
                         const base64 = await blobToBase64(blob);
-                        // Отправить в выбранный чат
                         if(recTarget === 'group') {
                             await database.ref('groupMessages').push({
                                 type: 'videoMsg',
@@ -1458,7 +1416,6 @@
                                 time: new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })
                             });
                         } else {
-                            // для личных чатов (если нужно)
                             if(currentPrivateChatId) {
                                 await database.ref('chats/'+currentPrivateChatId+'/messages').push({
                                     type: 'videoMsg',
@@ -1526,12 +1483,11 @@
             }
         });
         flashBtn.addEventListener('click', ()=>{
-            // простая заглушка
             flashBtn.style.opacity = (flashBtn.style.opacity === '1' ? '0.5' : '1');
         });
 
         // ============================================================
-        // 10. СТИКЕРЫ (общие)
+        // 10. СТИКЕРЫ
         // ============================================================
         function renderStickers(panel) {
             const stickers = getStickers();
@@ -1620,11 +1576,9 @@
                         tabs[key].classList.toggle('active', key === tab);
                     }
                     toggleMenu(false);
-                    // Если переключились на комнату – инициализируем
                     if(tab === 'room') initRoom();
                 });
             });
-            // Кнопка "ещё" в топбаре
             moreBtn.addEventListener('click', (e)=>{ e.stopPropagation(); moreMenu.classList.toggle('active'); });
             document.addEventListener('click', ()=>{ moreMenu.classList.remove('active'); });
         }
@@ -1643,7 +1597,7 @@
             document.getElementById('splash').classList.add('hidden');
         }, 2000);
 
-        console.log('🚀 арбузник v.8.0 – групповой чат + видеочат с несколькими участниками');
+        console.log('🚀 арбузник v.9.0 – групповой чат + видеочат с несколькими участниками + личные чаты');
     </script>
 </body>
 </html>
